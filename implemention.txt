@@ -1,0 +1,506 @@
+# Employee Management System - Implementation Plan
+
+## Project Overview
+
+Develop a modern and responsive Employee Management System with separate Admin and Employee roles.
+
+### Tech Stack
+
+#### Frontend
+- React.js (Vite)
+- Tailwind CSS
+- ShadCN UI
+- React Router DOM
+- Axios
+- Lucide Icons
+
+#### Backend
+- Django
+- Django REST Framework (DRF)
+- Django Simple JWT
+- SQLite Database
+
+#### UI Theme
+- Primary Color: #38BDF8 (Light Blue)
+- Secondary Color: #FFFFFF (White)
+- Modern Corporate Design
+- Fully Responsive (Mobile, Tablet, Desktop)
+
+---
+
+# Phase 1: Authentication & Employee Management
+
+## Functional Requirements
+
+### Admin Features
+
+- Admin Login
+- Register New Employee
+- View Employee List
+- Logout
+
+### Employee Features
+
+- Login using Employee ID
+- View Profile Information
+- Logout
+
+---
+
+# Frontend Implementation
+
+## Create React Project
+
+```bash
+npm create vite@latest frontend -- --template react
+cd frontend
+npm install
+```
+
+## Install Required Packages
+
+```bash
+npm install axios react-router-dom lucide-react
+npm install tailwindcss @tailwindcss/vite
+npx shadcn@latest init
+```
+
+---
+
+## Frontend Folder Structure
+
+```text
+frontend/
+│
+├── public/
+│
+├── src/
+│   │
+│   ├── assets/
+│   │
+│   ├── components/
+│   │   ├── common/
+│   │   │   ├── Navbar.jsx
+│   │   │   ├── Sidebar.jsx
+│   │   │   └── Loader.jsx
+│   │   │
+│   │   └── ui/
+│   │
+│   ├── pages/
+│   │   │
+│   │   ├── auth/
+│   │   │   └── Login.jsx
+│   │   │
+│   │   ├── admin/
+│   │   │   ├── Dashboard.jsx
+│   │   │   ├── EmployeeList.jsx
+│   │   │   └── RegisterEmployee.jsx
+│   │   │
+│   │   └── employee/
+│   │       └── Profile.jsx
+│   │
+│   ├── layouts/
+│   │   └── DashboardLayout.jsx
+│   │
+│   ├── context/
+│   │   └── AuthContext.jsx
+│   │
+│   ├── routes/
+│   │   ├── AppRoutes.jsx
+│   │   ├── AdminRoute.jsx
+│   │   └── EmployeeRoute.jsx
+│   │
+│   ├── services/
+│   │   ├── api.js
+│   │   └── authService.js
+│   │
+│   ├── App.jsx
+│   └── main.jsx
+│
+└── package.json
+```
+
+---
+
+# Backend Implementation
+
+## Create Django Project
+
+```bash
+django-admin startproject backend
+cd backend
+```
+
+## Create Application
+
+```bash
+python manage.py startapp accounts
+```
+
+## Install Dependencies
+
+```bash
+pip install django
+pip install djangorestframework
+pip install djangorestframework-simplejwt
+pip install django-cors-headers
+```
+
+## Create requirements file
+
+```bash
+pip freeze > requirements.txt
+```
+
+---
+
+## Backend Folder Structure
+
+```text
+backend/
+│
+├── accounts/
+│   ├── migrations/
+│   ├── models.py
+│   ├── serializers.py
+│   ├── views.py
+│   ├── urls.py
+│   ├── permissions.py
+│   └── admin.py
+│
+├── backend/
+│   ├── settings.py
+│   ├── urls.py
+│   ├── wsgi.py
+│   └── asgi.py
+│
+├── manage.py
+├── requirements.txt
+└── db.sqlite3
+```
+
+---
+
+# Database Design
+
+## Employee Table
+
+| Field Name | Type |
+|------------|------|
+| id | AutoField |
+| employee_id | CharField |
+| full_name | CharField |
+| email | EmailField |
+| department | CharField |
+| designation | CharField |
+| password | Hashed Password |
+| role | Admin/User |
+| created_at | DateTime |
+
+---
+
+# API Design
+
+## Authentication APIs
+
+### Admin Login
+
+```http
+POST /api/auth/admin-login/
+```
+
+Request
+
+```json
+{
+  "username": "admin",
+  "password": "admin123"
+}
+```
+
+Response
+
+```json
+{
+  "access": "jwt_access_token",
+  "refresh": "jwt_refresh_token"
+}
+```
+
+---
+
+### Employee Login
+
+```http
+POST /api/auth/employee-login/
+```
+
+Request
+
+```json
+{
+  "employee_id": "EMP001",
+  "password": "password123"
+}
+```
+
+---
+
+### Register Employee
+
+```http
+POST /api/employees/register/
+```
+
+Access
+
+```text
+Admin Only
+```
+
+---
+
+### Employee List
+
+```http
+GET /api/employees/
+```
+
+Access
+
+```text
+Admin Only
+```
+
+---
+
+### Employee Profile
+
+```http
+GET /api/profile/
+```
+
+Access
+
+```text
+Employee Only
+```
+
+---
+
+# Authentication Flow
+
+```text
+Admin Login
+    │
+    ▼
+JWT Token Generated
+    │
+    ▼
+Admin Dashboard
+    │
+    ▼
+Register Employee
+    │
+    ▼
+Employee Created
+    │
+    ▼
+Employee Login
+    │
+    ▼
+Employee Dashboard
+```
+
+---
+
+# UI Screens
+
+## Login Page
+
+Features
+
+- Company Logo
+- Employee ID Field
+- Password Field
+- Remember Me
+- Login Button
+- Responsive Layout
+
+Design
+
+- Glassmorphism Card
+- Light Blue Gradient Background
+- Clean Corporate UI
+
+---
+
+## Admin Dashboard
+
+Dashboard Cards
+
+- Total Employees
+- Active Employees
+- Departments
+
+Sections
+
+- Employee Table
+- Recent Employees
+- Quick Actions
+
+Buttons
+
+- Add Employee
+- View Employee
+- Logout
+
+---
+
+## Register Employee Page
+
+Fields
+
+- Employee ID
+- Full Name
+- Email
+- Department
+- Designation
+- Password
+- Confirm Password
+
+Validation
+
+- Required Fields
+- Unique Employee ID
+- Strong Password
+
+---
+
+## Employee Dashboard
+
+Display
+
+- Employee ID
+- Name
+- Department
+- Designation
+- Joining Date
+
+---
+
+# Security Requirements
+
+## Backend
+
+- JWT Authentication
+- Password Hashing
+- Protected APIs
+- Role Based Authorization
+- Token Expiry
+
+## Frontend
+
+- Protected Routes
+- Axios Interceptors
+- Auto Logout
+- Token Refresh
+
+---
+
+# Responsive Design
+
+## Mobile (<768px)
+
+- Single Column Layout
+- Sidebar Drawer
+- Full Width Cards
+
+## Tablet (768px - 1024px)
+
+- Two Column Layout
+- Collapsible Sidebar
+
+## Desktop (>1024px)
+
+- Sidebar + Content Layout
+- Dashboard Grid System
+
+---
+
+# Development Milestones
+
+## Sprint 1
+
+- Django Setup
+- DRF Setup
+- JWT Setup
+- Employee Model
+
+## Sprint 2
+
+- React Setup
+- Tailwind Setup
+- ShadCN Setup
+- Authentication UI
+
+## Sprint 3
+
+- Admin Login API
+- Employee Login API
+- Protected Routes
+
+## Sprint 4
+
+- Employee Registration
+- Employee List
+- Employee Profile
+
+## Sprint 5
+
+- Responsive Design
+- Testing
+- Bug Fixes
+
+---
+
+# Deliverables
+
+## Admin Module
+
+- Login
+- Register Employee
+- Employee List
+- Logout
+
+## Employee Module
+
+- Login with Employee ID
+- View Profile
+- Logout
+
+---
+
+# Future Enhancements (Phase 2)
+
+- Attendance Management
+- Leave Management
+- Payroll Management
+- Department Management
+- Profile Photo Upload
+- Email Notifications
+- Reports & Analytics
+- Role Based Permissions
+- Employee Search & Filter
+- Export Data to Excel/PDF
+
+---
+
+# Success Criteria
+
+- Modern UI using React + ShadCN
+- Secure JWT Authentication
+- Fully Responsive Design
+- Clean Folder Structure
+- Production Ready Architecture
+- Easy to Scale in Future Phases
