@@ -4,6 +4,8 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import check_password
+from django.db.models import Q
+from rest_framework.pagination import PageNumberPagination
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Employee
@@ -13,6 +15,12 @@ from .serializers import (
     AdminLoginSerializer,
     EmployeeLoginSerializer,
 )
+
+
+class StandardResultsPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 50
 
 
 def get_tokens_for_employee(employee):
@@ -77,11 +85,14 @@ class EmployeeLoginView(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        employee_id = serializer.validated_data['employee_id']
+        employee_identifier = serializer.validated_data['employee_id']
         password = serializer.validated_data['password']
 
         try:
-            employee = Employee.objects.get(employee_id=employee_id, is_active=True)
+            employee = Employee.objects.get(
+                Q(employee_id=employee_identifier) | Q(email__iexact=employee_identifier),
+                is_active=True
+            )
         except Employee.DoesNotExist:
             return Response(
                 {'detail': 'Employee not found or inactive.'},
@@ -138,8 +149,42 @@ class EmployeeListView(APIView):
             )
 
         employees = Employee.objects.filter(role='employee')
-        serializer = EmployeeSerializer(employees, many=True)
-        return Response(serializer.data)
+        search = request.query_params.get('search')
+        if search:
+            employees = employees.filter(
+                Q(full_name__icontains=search) |
+                Q(employee_id__icontains=search) |
+                Q(email__icontains=search) |
+                Q(department__icontains=search) |
+                Q(designation__icontains=search)
+            )
+
+        paginator = StandardResultsPagination()
+        page = paginator.paginate_queryset(employees, request)
+        serializer = EmployeeSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
+class EmployeeStatusView(APIView):
+    """Admin only: Activate or deactivate an employee."""
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        if not (request.user.is_superuser or
+                (hasattr(request.auth, 'get') and request.auth.get('role') == 'admin')):
+            return Response(
+                {'detail': 'Admin access required.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        try:
+            employee = Employee.objects.get(pk=pk, role='employee')
+        except Employee.DoesNotExist:
+            return Response({'detail': 'Employee not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        employee.is_active = bool(request.data.get('is_active'))
+        employee.save(update_fields=['is_active'])
+        return Response(EmployeeSerializer(employee).data)
 
 
 class EmployeeProfileView(APIView):

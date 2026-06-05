@@ -1,363 +1,254 @@
-# Employee Management System - Implementation Plan
-
-## Project Overview
-
-Develop a modern and responsive Employee Management System with separate Admin and Employee roles.
-
-### Tech Stack
-
-#### Frontend
-- React.js (Vite)
-- Tailwind CSS
-- ShadCN UI
-- React Router DOM
-- Axios
-- Lucide Icons
-
-#### Backend
-- Django
-- Django REST Framework (DRF)
-- Django Simple JWT
-- SQLite Database
-
-#### UI Theme
-- Primary Color: #38BDF8 (Light Blue)
-- Secondary Color: #FFFFFF (White)
-- Modern Corporate Design
-- Fully Responsive (Mobile, Tablet, Desktop)
+# Employee Management System
+# Employee Timesheet / Daily Work Tracking Module
+# Phase 2 Implementation Plan
 
 ---
 
-# Phase 1: Authentication & Employee Management
+## Module Overview
 
-## Functional Requirements
+This module allows employees to record daily work activities and submit 8 hours of work every day.
 
-### Admin Features
+Employees can:
 
-- Admin Login
-- Register New Employee
-- View Employee List
-- Logout
+- Add Daily Work Logs
+- Track Planned vs Actual Time
+- View Today's Timesheet
+- View Work History
+- Edit/Delete Work Logs
+- View Profile
 
-### Employee Features
+Admins can:
 
-- Login using Employee ID
-- View Profile Information
-- Logout
-
----
-
-# Frontend Implementation
-
-## Create React Project
-
-```bash
-npm create vite@latest frontend -- --template react
-cd frontend
-npm install
-```
-
-## Install Required Packages
-
-```bash
-npm install axios react-router-dom lucide-react
-npm install tailwindcss @tailwindcss/vite
-npx shadcn@latest init
-```
+- View Employee Timesheets
+- Monitor Daily Productivity
+- Generate Reports (Future Phase)
 
 ---
 
-## Frontend Folder Structure
+# Business Rules
 
-```text
-frontend/
-│
-├── public/
-│
-├── src/
-│   │
-│   ├── assets/
-│   │
-│   ├── components/
-│   │   ├── common/
-│   │   │   ├── Navbar.jsx
-│   │   │   ├── Sidebar.jsx
-│   │   │   └── Loader.jsx
-│   │   │
-│   │   └── ui/
-│   │
-│   ├── pages/
-│   │   │
-│   │   ├── auth/
-│   │   │   └── Login.jsx
-│   │   │
-│   │   ├── admin/
-│   │   │   ├── Dashboard.jsx
-│   │   │   ├── EmployeeList.jsx
-│   │   │   └── RegisterEmployee.jsx
-│   │   │
-│   │   └── employee/
-│   │       └── Profile.jsx
-│   │
-│   ├── layouts/
-│   │   └── DashboardLayout.jsx
-│   │
-│   ├── context/
-│   │   └── AuthContext.jsx
-│   │
-│   ├── routes/
-│   │   ├── AppRoutes.jsx
-│   │   ├── AdminRoute.jsx
-│   │   └── EmployeeRoute.jsx
-│   │
-│   ├── services/
-│   │   ├── api.js
-│   │   └── authService.js
-│   │
-│   ├── App.jsx
-│   └── main.jsx
-│
-└── package.json
-```
+## Rule 1
+
+Daily total hours must not exceed 8 hours.
+
+Example:
+
+Task 1 = 2 Hours
+
+Task 2 = 3 Hours
+
+Task 3 = 4 Hours
+
+Total = 9 Hours
+
+Result:
+
+Validation Error
 
 ---
 
-# Backend Implementation
+## Rule 2
 
-## Create Django Project
+No overlapping time slots allowed.
 
-```bash
-django-admin startproject backend
-cd backend
-```
+Example:
 
-## Create Application
+Task 1
 
-```bash
-python manage.py startapp accounts
-```
+09:00 AM - 11:00 AM
 
-## Install Dependencies
+Task 2
 
-```bash
-pip install django
-pip install djangorestframework
-pip install djangorestframework-simplejwt
-pip install django-cors-headers
-```
+10:30 AM - 12:00 PM
 
-## Create requirements file
+Result:
 
-```bash
-pip freeze > requirements.txt
-```
+Validation Error
 
 ---
 
-## Backend Folder Structure
+## Rule 3
 
-```text
-backend/
-│
-├── accounts/
-│   ├── migrations/
-│   ├── models.py
-│   ├── serializers.py
-│   ├── views.py
-│   ├── urls.py
-│   ├── permissions.py
-│   └── admin.py
-│
-├── backend/
-│   ├── settings.py
-│   ├── urls.py
-│   ├── wsgi.py
-│   └── asgi.py
-│
-├── manage.py
-├── requirements.txt
-└── db.sqlite3
-```
+Employee should complete 8 hours before final submission.
+
+Example:
+
+Total Hours = 6
+
+Result:
+
+Show Warning
+
+Remaining Hours = 2
 
 ---
 
-# Database Design
+# Employee Dashboard
 
-## Employee Table
+## Dashboard Cards
 
-| Field Name | Type |
-|------------|------|
-| id | AutoField |
-| employee_id | CharField |
-| full_name | CharField |
-| email | EmailField |
-| department | CharField |
-| designation | CharField |
-| password | Hashed Password |
-| role | Admin/User |
-| created_at | DateTime |
+### Card 1
+
+Today's Logged Hours
+
+Example:
+
+6.5 Hours
 
 ---
 
-# API Design
+### Card 2
 
-## Authentication APIs
+Remaining Hours
 
-### Admin Login
+Example:
 
-```http
-POST /api/auth/admin-login/
-```
-
-Request
-
-```json
-{
-  "username": "admin",
-  "password": "admin123"
-}
-```
-
-Response
-
-```json
-{
-  "access": "jwt_access_token",
-  "refresh": "jwt_refresh_token"
-}
-```
+1.5 Hours
 
 ---
 
-### Employee Login
+### Card 3
 
-```http
-POST /api/auth/employee-login/
-```
+Total Tasks
 
-Request
+Example:
 
-```json
-{
-  "employee_id": "EMP001",
-  "password": "password123"
-}
-```
+5 Tasks
 
 ---
 
-### Register Employee
+### Card 4
 
-```http
-POST /api/employees/register/
-```
+Current Date
 
-Access
+Example:
 
-```text
-Admin Only
-```
+01-Jun-2026
 
 ---
 
-### Employee List
+# Daily Work Entry Form
 
-```http
-GET /api/employees/
-```
+## Section 1
 
-Access
+Project Information
 
-```text
-Admin Only
-```
+Fields:
 
----
-
-### Employee Profile
-
-```http
-GET /api/profile/
-```
-
-Access
-
-```text
-Employee Only
-```
+- Project Name
+- Milestone Name
+- Task Name
+- Task Type
 
 ---
 
-# Authentication Flow
+## Task Type Dropdown
 
-```text
-Admin Login
-    │
-    ▼
-JWT Token Generated
-    │
-    ▼
-Admin Dashboard
-    │
-    ▼
-Register Employee
-    │
-    ▼
-Employee Created
-    │
-    ▼
-Employee Login
-    │
-    ▼
-Employee Dashboard
-```
+Options:
+
+- Development
+- Bug Fix
+- Testing
+- Research
+- Documentation
+- Meeting
+- Support
+- Code Review
 
 ---
 
-# UI Screens
+## Section 2
 
-## Login Page
+Planned Time
 
-Features
+Fields:
 
-- Company Logo
-- Employee ID Field
-- Password Field
-- Remember Me
-- Login Button
-- Responsive Layout
+- Planned Start Time
+- Planned End Time
 
-Design
+Auto Calculate:
 
-- Glassmorphism Card
-- Light Blue Gradient Background
-- Clean Corporate UI
+Planned Hours
 
----
+Example:
 
-## Admin Dashboard
+09:00 AM
 
-Dashboard Cards
+11:00 AM
 
-- Total Employees
-- Active Employees
-- Departments
-
-Sections
-
-- Employee Table
-- Recent Employees
-- Quick Actions
-
-Buttons
-
-- Add Employee
-- View Employee
-- Logout
+Planned Hours = 2
 
 ---
 
-## Register Employee Page
+## Section 3
+
+Actual Time
+
+Fields:
+
+- Actual Start Time
+- Actual End Time
+
+Auto Calculate:
+
+Actual Hours
+
+Example:
+
+09:15 AM
+
+11:30 AM
+
+Actual Hours = 2.25
+
+---
+
+## Section 4
+
+Remarks
+
+Field:
+
+Work Description
+
+Example:
+
+Implemented JWT Authentication APIs and tested login flow.
+
+---
+
+# Timesheet Table
+
+Columns
+
+| Project | Milestone | Task | Type | Planned Hours | Actual Hours | Actions |
+|----------|----------|----------|----------|----------|----------|----------|
+| EMS | Authentication | JWT Login | Development | 2 | 2.5 | Edit/Delete |
+
+---
+
+# Employee History
+
+## Filters
+
+- Today
+- This Week
+- This Month
+- Custom Date Range
+
+---
+
+## Search
+
+Search By:
+
+- Project
+- Milestone
+- Task Name
+
+---
+
+# Employee Profile
 
 Fields
 
@@ -366,141 +257,237 @@ Fields
 - Email
 - Department
 - Designation
-- Password
-- Confirm Password
-
-Validation
-
-- Required Fields
-- Unique Employee ID
-- Strong Password
-
----
-
-## Employee Dashboard
-
-Display
-
-- Employee ID
-- Name
-- Department
-- Designation
 - Joining Date
 
 ---
 
-# Security Requirements
+# Backend Implementation
 
-## Backend
+## Create New Django App
 
-- JWT Authentication
-- Password Hashing
-- Protected APIs
-- Role Based Authorization
-- Token Expiry
+timesheets
 
-## Frontend
+```bash
+python manage.py startapp timesheets
+```
 
-- Protected Routes
-- Axios Interceptors
-- Auto Logout
-- Token Refresh
+---
+
+# Backend Folder Structure
+
+```text
+backend/
+
+├── accounts/
+│
+├── timesheets/
+│   ├── migrations/
+│   ├── models.py
+│   ├── serializers.py
+│   ├── views.py
+│   ├── urls.py
+│   ├── permissions.py
+│
+├── backend/
+│
+└── manage.py
+```
+
+---
+
+# Database Design
+
+## Timesheet Model
+
+Fields
+
+| Field | Type |
+|---------|---------|
+| id | AutoField |
+| employee | ForeignKey |
+| date | DateField |
+| project_name | CharField |
+| milestone_name | CharField |
+| task_name | CharField |
+| task_type | CharField |
+| planned_start | TimeField |
+| planned_end | TimeField |
+| actual_start | TimeField |
+| actual_end | TimeField |
+| planned_hours | DecimalField |
+| actual_hours | DecimalField |
+| remarks | TextField |
+| created_at | DateTimeField |
+
+---
+
+# API Endpoints
+
+## Create Timesheet
+
+```http
+POST /api/timesheets/
+```
+
+---
+
+## Get Today's Entries
+
+```http
+GET /api/timesheets/today/
+```
+
+---
+
+## Get Employee History
+
+```http
+GET /api/timesheets/history/
+```
+
+---
+
+## Update Entry
+
+```http
+PUT /api/timesheets/{id}/
+```
+
+---
+
+## Delete Entry
+
+```http
+DELETE /api/timesheets/{id}/
+```
+
+---
+
+## Get Employee Dashboard Summary
+
+```http
+GET /api/dashboard-summary/
+```
+
+Response
+
+```json
+{
+  "logged_hours": 6.5,
+  "remaining_hours": 1.5,
+  "total_tasks": 4
+}
+```
+
+---
+
+# Frontend Implementation
+
+## Pages
+
+```text
+src/pages/employee/
+
+Dashboard.jsx
+AddWorkLog.jsx
+TodayTimesheet.jsx
+History.jsx
+Profile.jsx
+```
+
+---
+
+# Frontend Components
+
+```text
+src/components/employee/
+
+WorkLogForm.jsx
+TimesheetTable.jsx
+DashboardCards.jsx
+HistoryFilter.jsx
+ProfileCard.jsx
+```
+
+---
+
+# Route Structure
+
+```text
+/employee/dashboard
+
+/employee/add-work
+
+/employee/today-timesheet
+
+/employee/history
+
+/employee/profile
+```
+
+---
+
+# UI Design
+
+## Theme
+
+Primary Color
+
+#38BDF8
+
+Secondary Color
+
+#E0F2FE
+
+Background
+
+#FFFFFF
+
+Text
+
+#0F172A
+
+---
+
+# ShadCN Components
+
+Use:
+
+- Card
+- Table
+- Dialog
+- Sheet
+- Button
+- Select
+- Input
+- Date Picker
+- Textarea
+- Badge
 
 ---
 
 # Responsive Design
 
-## Mobile (<768px)
+## Mobile
 
 - Single Column Layout
-- Sidebar Drawer
-- Full Width Cards
+- Drawer Sidebar
+- Scrollable Table
 
-## Tablet (768px - 1024px)
+---
+
+## Tablet
 
 - Two Column Layout
 - Collapsible Sidebar
 
-## Desktop (>1024px)
+---
 
-- Sidebar + Content Layout
-- Dashboard Grid System
+## Desktop
+
+- Full Sidebar
+- Dashboard Grid
+- Large Data Table
 
 ---
 
-# Development Milestones
-
-## Sprint 1
-
-- Django Setup
-- DRF Setup
-- JWT Setup
-- Employee Model
-
-## Sprint 2
-
-- React Setup
-- Tailwind Setup
-- ShadCN Setup
-- Authentication UI
-
-## Sprint 3
-
-- Admin Login API
-- Employee Login API
-- Protected Routes
-
-## Sprint 4
-
-- Employee Registration
-- Employee List
-- Employee Profile
-
-## Sprint 5
-
-- Responsive Design
-- Testing
-- Bug Fixes
-
----
-
-# Deliverables
-
-## Admin Module
-
-- Login
-- Register Employee
-- Employee List
-- Logout
-
-## Employee Module
-
-- Login with Employee ID
-- View Profile
-- Logout
-
----
-
-# Future Enhancements (Phase 2)
-
-- Attendance Management
-- Leave Management
-- Payroll Management
-- Department Management
-- Profile Photo Upload
-- Email Notifications
-- Reports & Analytics
-- Role Based Permissions
-- Employee Search & Filter
-- Export Data to Excel/PDF
-
----
-
-# Success Criteria
-
-- Modern UI using React + ShadCN
-- Secure JWT Authentication
-- Fully Responsive Design
-- Clean Folder Structure
-- Production Ready Architecture
-- Easy to Scale in Future Phases

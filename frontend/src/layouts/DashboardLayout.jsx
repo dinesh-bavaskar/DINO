@@ -1,13 +1,15 @@
 import Sidebar from '../components/common/Sidebar';
+import { useAuth } from '../context/AuthContext';
 
 const DashboardLayout = ({ children }) => {
+  const { user } = useAuth();
+  const isEmployee = user?.role === 'employee';
+
   return (
-    <div className="page-wrapper">
-      <Sidebar />
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div className="main-content">
-          {children}
-        </div>
+    <div className="flex h-screen overflow-hidden bg-slate-50">
+      {!isEmployee && <Sidebar />}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto pb-20 md:pb-0">
+        {children}
       </div>
     </div>
   );

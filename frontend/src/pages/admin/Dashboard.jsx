@@ -1,319 +1,127 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { ArrowRight, ArrowUpRight, Building2, UserCheck, UserPlus, Users } from 'lucide-react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import Navbar from '../../components/common/Navbar';
 import Loader from '../../components/common/Loader';
-import { getStats, getEmployees } from '../../services/authService';
-import { Users, UserCheck, Building, UserPlus, ArrowRight, TrendingUp } from 'lucide-react';
+import { Badge } from '../../components/ui';
+import { buttonClass } from '../../components/uiClasses';
+import { getEmployees, getStats } from '../../services/authService';
+import { useAuth } from '../../context/AuthContext';
+
+const avatarColors = ['bg-blue-600', 'bg-emerald-600', 'bg-violet-600', 'bg-amber-600', 'bg-red-600', 'bg-sky-600'];
 
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState({ total_employees: 0, active_employees: 0, departments: 0 });
-  const [recentEmployees, setRecentEmployees] = useState([]);
+  const [recentEmployees, setRecent] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [statsRes, empRes] = await Promise.all([getStats(), getEmployees()]);
-        setStats(statsRes.data);
-        setRecentEmployees(empRes.data.slice(0, 5));
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+    Promise.all([getStats(), getEmployees({ page_size: 5 })])
+      .then(([sRes, eRes]) => {
+        setStats(sRes.data);
+        setRecent(eRes.data.slice(0, 5));
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, []);
 
   const statCards = [
-    {
-      label: 'Total Employees',
-      value: stats.total_employees,
-      icon: Users,
-      color: '#1D6EF5',
-      bg: '#EBF2FF',
-      trend: '+12%',
-    },
-    {
-      label: 'Active Employees',
-      value: stats.active_employees,
-      icon: UserCheck,
-      color: '#059669',
-      bg: '#ECFDF5',
-      trend: '+5%',
-    },
-    {
-      label: 'Departments',
-      value: stats.departments,
-      icon: Building,
-      color: '#7C3AED',
-      bg: '#F5F3FF',
-      trend: 'Stable',
-    },
+    { label: 'Total Employees', value: stats.total_employees, icon: Users, tone: 'bg-blue-50 text-blue-700' },
+    { label: 'Active', value: stats.active_employees, icon: UserCheck, tone: 'bg-emerald-50 text-emerald-700' },
+    { label: 'Departments', value: stats.departments, icon: Building2, tone: 'bg-violet-50 text-violet-700' },
   ];
-
-  const avatarColors = ['#1D6EF5', '#059669', '#7C3AED', '#D97706', '#DC2626', '#0EA5E9'];
 
   return (
     <DashboardLayout>
-      <Navbar
-        title={`Good day, ${user?.full_name?.split(' ')[0]} 👋`}
-        subtitle="Here's your team overview for today"
-      />
-
-      <div style={{ padding: '28px', animation: 'fadeIn 0.4s ease' }}>
-        {loading ? (
-          <Loader text="Loading dashboard..." />
-        ) : (
-          <>
-            {/* Welcome Banner */}
-            <div style={{
-              background: 'linear-gradient(135deg, #1D6EF5 0%, #1045B8 100%)',
-              borderRadius: '16px',
-              padding: '28px 32px',
-              marginBottom: '24px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              overflow: 'hidden',
-              position: 'relative',
-            }}>
-              <div style={{
-                position: 'absolute', right: '-30px', top: '-30px',
-                width: '200px', height: '200px',
-                borderRadius: '50%', background: 'rgba(255,255,255,0.06)',
-              }} />
-              <div style={{
-                position: 'absolute', right: '80px', bottom: '-60px',
-                width: '150px', height: '150px',
-                borderRadius: '50%', background: 'rgba(255,255,255,0.04)',
-              }} />
-              <div style={{ position: 'relative' }}>
-                <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#FFFFFF', marginBottom: '6px' }}>
-                  Employee Management Dashboard
-                </h2>
-                <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.75)' }}>
-                  You have <strong style={{ color: '#FFFFFF' }}>{stats.total_employees}</strong> total employees across <strong style={{ color: '#FFFFFF' }}>{stats.departments}</strong> departments.
-                </p>
-              </div>
-              <button
-                onClick={() => navigate('/admin/register')}
-                style={{
-                  position: 'relative',
-                  background: 'rgba(255,255,255,0.18)',
-                  border: '1.5px solid rgba(255,255,255,0.3)',
-                  borderRadius: '10px',
-                  padding: '12px 20px',
-                  color: '#FFFFFF',
-                  fontFamily: 'Inter, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '14px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  backdropFilter: 'blur(8px)',
-                  transition: 'all 0.2s ease',
-                  whiteSpace: 'nowrap',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.28)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.18)'}
-              >
-                <UserPlus size={16} />
-                Add Employee
-              </button>
-            </div>
-
-            {/* Stat Cards */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '16px',
-              marginBottom: '24px',
-            }}>
-              {statCards.map(({ label, value, icon: Icon, color, bg, trend }) => (
-                <div key={label} className="stat-card">
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+      <Navbar title="Dashboard" subtitle={`Welcome back, ${user?.full_name}`} />
+      <main className="flex-1 overflow-auto bg-slate-50 p-4 md:p-7">
+        {loading ? <Loader /> : (
+          <div className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-3">
+              {statCards.map(({ label, value, icon: Icon, tone }) => (
+                <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md" key={label}>
+                  <div className="flex items-center justify-between">
                     <div>
-                      <p style={{ fontSize: '12px', color: '#64748B', marginBottom: '8px', fontWeight: 500 }}>{label}</p>
-                      <p style={{ fontSize: '38px', fontWeight: 800, color: '#0F172A', lineHeight: 1 }}>{value}</p>
+                      <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{label}</p>
+                      <p className="mt-3 text-4xl font-black text-slate-950">{value}</p>
                     </div>
-                    <div style={{
-                      width: '48px', height: '48px',
-                      background: bg,
-                      borderRadius: '12px',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <Icon size={22} color={color} />
+                    <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${tone}`}>
+                      <Icon size={23} />
                     </div>
-                  </div>
-                  <div style={{
-                    display: 'flex', alignItems: 'center', gap: '4px',
-                    marginTop: '14px',
-                    paddingTop: '12px',
-                    borderTop: '1px solid #E2E8F4',
-                  }}>
-                    <TrendingUp size={13} color="#059669" />
-                    <span style={{ fontSize: '12px', color: '#059669', fontWeight: 600 }}>{trend}</span>
-                    <span style={{ fontSize: '12px', color: '#94A3B8' }}>vs last month</span>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Quick Actions */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '16px',
-              marginBottom: '24px',
-            }}>
+            <div className="grid gap-4 lg:grid-cols-2">
               {[
-                {
-                  id: 'btn-register-employee',
-                  path: '/admin/register',
-                  icon: UserPlus,
-                  title: 'Register Employee',
-                  desc: 'Add a new employee to the system',
-                  color: '#1D6EF5',
-                  bg: '#EBF2FF',
-                  border: 'rgba(29,110,245,0.2)',
-                },
-                {
-                  id: 'btn-view-employees',
-                  path: '/admin/employees',
-                  icon: Users,
-                  title: 'View All Employees',
-                  desc: 'Browse and manage your team',
-                  color: '#7C3AED',
-                  bg: '#F5F3FF',
-                  border: 'rgba(124,58,237,0.2)',
-                },
-              ].map(({ id, path, icon: Icon, title, desc, color, bg, border }) => (
-                <button
-                  key={id}
-                  id={id}
-                  onClick={() => navigate(path)}
-                  style={{
-                    background: '#FFFFFF',
-                    border: `1px solid ${border}`,
-                    borderRadius: '14px',
-                    padding: '20px 22px',
-                    cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', gap: '16px',
-                    transition: 'all 0.25s ease',
-                    textAlign: 'left',
-                    boxShadow: '0 1px 4px rgba(29,110,245,0.06)',
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(29,110,245,0.12)';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 1px 4px rgba(29,110,245,0.06)';
-                  }}
-                >
-                  <div style={{
-                    width: '48px', height: '48px',
-                    background: bg,
-                    borderRadius: '12px',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flexShrink: 0,
-                  }}>
-                    <Icon size={22} color={color} />
+                { path: '/admin/register', icon: UserPlus, label: 'Register New Employee', desc: 'Add a team member to the system', tone: 'bg-blue-50 text-blue-700' },
+                { path: '/admin/employees', icon: Users, label: 'View All Employees', desc: 'Browse and manage your team', tone: 'bg-violet-50 text-violet-700' },
+              ].map(({ path, icon: Icon, label, desc, tone }) => (
+                <button className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-blue-200 hover:shadow-md" key={path} onClick={() => navigate(path)} type="button">
+                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${tone}`}>
+                    <Icon size={22} />
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ fontWeight: 700, fontSize: '15px', color: '#0F172A' }}>{title}</p>
-                    <p style={{ fontSize: '12px', color: '#64748B', marginTop: '2px' }}>{desc}</p>
+                  <div className="flex-1">
+                    <p className="font-bold text-slate-950">{label}</p>
+                    <p className="mt-1 text-sm text-slate-400">{desc}</p>
                   </div>
-                  <ArrowRight size={16} color={color} />
+                  <ArrowRight className="text-slate-300" size={18} />
                 </button>
               ))}
             </div>
 
-            {/* Recent Employees Table */}
-            <div>
-              <div style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                marginBottom: '14px',
-              }}>
+            <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+              <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
                 <div>
-                  <p className="section-title">Recent Employees</p>
-                  <p className="section-subtitle">Latest additions to your team</p>
+                  <h2 className="font-bold text-slate-950">Recent Employees</h2>
+                  <p className="text-sm text-slate-400">Last {recentEmployees.length} added</p>
                 </div>
-                <button
-                  onClick={() => navigate('/admin/employees')}
-                  style={{
-                    background: 'transparent', border: 'none', cursor: 'pointer',
-                    color: '#1D6EF5', fontSize: '13px', fontWeight: 600,
-                    display: 'flex', alignItems: 'center', gap: '4px',
-                    fontFamily: 'Inter, sans-serif',
-                  }}
-                >
-                  View all <ArrowRight size={14} />
+                <button className={buttonClass.outline} onClick={() => navigate('/admin/employees')} type="button">
+                  View all <ArrowUpRight size={15} />
                 </button>
               </div>
-
-              <div className="table-container">
-                <table>
-                  <thead>
+              <div className="overflow-x-auto">
+                <table className="min-w-full">
+                  <thead className="bg-slate-50">
                     <tr>
-                      <th>Employee</th>
-                      <th>Employee ID</th>
-                      <th>Department</th>
-                      <th>Designation</th>
-                      <th>Status</th>
+                      {['Employee', 'ID', 'Department', 'Designation', 'Status'].map((header) => (
+                        <th className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-400" key={header}>{header}</th>
+                      ))}
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-slate-100">
                     {recentEmployees.length === 0 ? (
-                      <tr>
-                        <td colSpan={5} style={{ textAlign: 'center', padding: '48px', color: '#94A3B8' }}>
-                          <Users size={36} style={{ margin: '0 auto 12px', display: 'block', opacity: 0.3 }} />
-                          No employees registered yet.
-                        </td>
-                      </tr>
-                    ) : recentEmployees.map((emp, idx) => (
-                      <tr key={emp.id}>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <div style={{
-                              width: '34px', height: '34px',
-                              background: avatarColors[idx % avatarColors.length],
-                              borderRadius: '9px',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              color: 'white', fontWeight: 700, fontSize: '13px', flexShrink: 0,
-                            }}>
+                      <tr><td className="px-5 py-12 text-center text-sm text-slate-400" colSpan={5}>No employees registered yet.</td></tr>
+                    ) : recentEmployees.map((emp, index) => (
+                      <tr className="hover:bg-slate-50" key={emp.id}>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className={`flex h-9 w-9 items-center justify-center rounded-lg text-sm font-bold text-white ${avatarColors[index % avatarColors.length]}`}>
                               {emp.full_name.charAt(0).toUpperCase()}
                             </div>
                             <div>
-                              <p style={{ fontWeight: 600, fontSize: '14px', color: '#0F172A' }}>{emp.full_name}</p>
-                              <p style={{ fontSize: '11px', color: '#94A3B8' }}>{emp.email}</p>
+                              <p className="font-semibold text-slate-950">{emp.full_name}</p>
+                              <p className="text-xs text-slate-400">{emp.email}</p>
                             </div>
                           </div>
                         </td>
-                        <td><span className="badge badge-primary">{emp.employee_id}</span></td>
-                        <td style={{ color: '#475569', fontSize: '13px' }}>{emp.department}</td>
-                        <td style={{ color: '#475569', fontSize: '13px' }}>{emp.designation}</td>
-                        <td>
-                          <span className={`badge ${emp.is_active ? 'badge-success' : 'badge-danger'}`}>
-                            {emp.is_active ? '● Active' : '● Inactive'}
-                          </span>
-                        </td>
+                        <td className="px-5 py-4"><Badge tone="blue">{emp.employee_id}</Badge></td>
+                        <td className="px-5 py-4 text-sm text-slate-600">{emp.department}</td>
+                        <td className="px-5 py-4 text-sm text-slate-600">{emp.designation}</td>
+                        <td className="px-5 py-4"><Badge tone={emp.is_active ? 'green' : 'red'}>{emp.is_active ? 'Active' : 'Inactive'}</Badge></td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            </div>
-          </>
+            </section>
+          </div>
         )}
-      </div>
+      </main>
     </DashboardLayout>
   );
 };

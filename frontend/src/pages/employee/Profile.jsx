@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { Briefcase, Building2, Calendar, IdCard, Mail, Shield, User } from 'lucide-react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import Navbar from '../../components/common/Navbar';
 import Loader from '../../components/common/Loader';
+import { Badge } from '../../components/ui';
 import { getProfile } from '../../services/authService';
-import { User, Mail, Building2, Briefcase, IdCard, Shield, Calendar } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const Profile = () => {
   const { user } = useAuth();
@@ -14,181 +15,73 @@ const Profile = () => {
 
   useEffect(() => {
     getProfile()
-      .then(res => setProfile(res.data))
+      .then((res) => setProfile(res.data))
       .catch(() => setError('Failed to load profile. Please try again.'))
       .finally(() => setLoading(false));
   }, []);
 
-  const InfoRow = ({ icon: Icon, label, value, highlight }) => (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: '16px',
-      padding: '15px 20px',
-      borderBottom: '1px solid #E2E8F4',
-      transition: 'background 0.15s ease',
-    }}
-      onMouseEnter={e => e.currentTarget.style.background = '#F8FAFF'}
-      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-    >
-      <div style={{
-        width: '38px', height: '38px',
-        background: '#EBF2FF',
-        borderRadius: '10px',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0,
-        border: '1px solid rgba(29,110,245,0.15)',
-      }}>
-        <Icon size={17} color="#1D6EF5" />
-      </div>
-      <div style={{ flex: 1 }}>
-        <p style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-          {label}
-        </p>
-        <p style={{
-          fontSize: '15px', fontWeight: 600,
-          color: highlight ? '#1D6EF5' : '#0F172A',
-          marginTop: '2px',
-        }}>
-          {value || '—'}
-        </p>
-      </div>
-    </div>
-  );
+  const rows = [
+    { icon: User, label: 'Full Name', value: profile?.full_name },
+    { icon: IdCard, label: 'Employee ID', value: profile?.employee_id || user?.employee_id, highlight: true },
+    { icon: Mail, label: 'Email Address', value: profile?.email },
+    { icon: Building2, label: 'Department', value: profile?.department },
+    { icon: Briefcase, label: 'Designation', value: profile?.designation },
+    { icon: Shield, label: 'Role', value: profile?.role === 'admin' ? 'Administrator' : 'Employee' },
+    {
+      icon: Calendar,
+      label: 'Joined On',
+      value: profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : '-',
+    },
+  ];
 
   return (
     <DashboardLayout>
       <Navbar title="My Profile" subtitle="Your personal information" />
-
-      <div style={{ padding: '28px', animation: 'fadeIn 0.4s ease' }}>
-        {loading ? (
-          <Loader text="Loading profile..." />
-        ) : error ? (
-          <div className="alert alert-error">{error}</div>
+      <main className="flex-1 overflow-auto bg-slate-50 p-4 md:p-7">
+        {loading ? <Loader text="Loading profile..." /> : error ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>
         ) : (
-          <div style={{ maxWidth: '700px', margin: '0 auto' }}>
-            {/* Profile Header Card */}
-            <div style={{
-              background: 'linear-gradient(135deg, #1D6EF5 0%, #1045B8 100%)',
-              borderRadius: '16px',
-              padding: '28px 32px',
-              marginBottom: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '24px',
-              position: 'relative',
-              overflow: 'hidden',
-            }}>
-              {/* Decorations */}
-              <div style={{
-                position: 'absolute', right: '-20px', top: '-20px',
-                width: '160px', height: '160px',
-                borderRadius: '50%', background: 'rgba(255,255,255,0.07)',
-              }} />
-              <div style={{
-                position: 'absolute', right: '80px', bottom: '-40px',
-                width: '100px', height: '100px',
-                borderRadius: '50%', background: 'rgba(255,255,255,0.05)',
-              }} />
-
-              {/* Avatar */}
-              <div style={{
-                width: '80px', height: '80px',
-                background: 'rgba(255,255,255,0.2)',
-                borderRadius: '20px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '32px', fontWeight: 800, color: 'white',
-                flexShrink: 0,
-                border: '2px solid rgba(255,255,255,0.35)',
-                position: 'relative',
-              }}>
-                {(profile?.full_name || user?.full_name || 'U').charAt(0).toUpperCase()}
-              </div>
-
-              <div style={{ flex: 1, position: 'relative' }}>
-                <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#FFFFFF' }}>
-                  {profile?.full_name || user?.full_name}
-                </h2>
-                <p style={{ color: 'rgba(255,255,255,0.75)', marginTop: '4px', fontSize: '14px' }}>
-                  {profile?.designation} • {profile?.department}
-                </p>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '14px', flexWrap: 'wrap' }}>
-                  <span style={{
-                    background: 'rgba(255,255,255,0.18)',
-                    border: '1px solid rgba(255,255,255,0.3)',
-                    color: '#FFFFFF',
-                    padding: '4px 12px',
-                    borderRadius: '99px',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                  }}>
-                    {profile?.employee_id || user?.employee_id}
-                  </span>
-                  <span style={{
-                    background: 'rgba(255,255,255,0.18)',
-                    border: '1px solid rgba(255,255,255,0.3)',
-                    color: '#FFFFFF',
-                    padding: '4px 12px',
-                    borderRadius: '99px',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                  }}>
-                    {profile?.role === 'admin' ? '🛡️ Admin' : '👤 Employee'}
-                  </span>
-                  {profile?.is_active && (
-                    <span style={{
-                      background: 'rgba(16,185,129,0.25)',
-                      border: '1px solid rgba(16,185,129,0.5)',
-                      color: '#FFFFFF',
-                      padding: '4px 12px',
-                      borderRadius: '99px',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                    }}>
-                      ● Active
-                    </span>
-                  )}
+          <div className="mx-auto max-w-3xl space-y-5">
+            <section className="relative overflow-hidden rounded-lg bg-blue-600 p-7 text-white shadow-sm">
+              <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-white/10" />
+              <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center">
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-md border-2 border-white/30 bg-white/20 text-3xl font-black">
+                  {(profile?.full_name || user?.full_name || 'U').charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h2 className="text-2xl font-black">{profile?.full_name || user?.full_name}</h2>
+                  <p className="mt-1 text-sm text-white/75">{profile?.designation} • {profile?.department}</p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <span className="rounded-md border border-white/30 bg-white/20 px-3 py-1 text-xs font-semibold">{profile?.employee_id || user?.employee_id}</span>
+                    <span className="rounded-md border border-white/30 bg-white/20 px-3 py-1 text-xs font-semibold">{profile?.role === 'admin' ? 'Admin' : 'Employee'}</span>
+                    {profile?.is_active && <span className="rounded-md border border-emerald-200/60 bg-emerald-400/25 px-3 py-1 text-xs font-semibold">Active</span>}
+                  </div>
                 </div>
               </div>
-            </div>
+            </section>
 
-            {/* Info Card */}
-            <div style={{
-              background: '#FFFFFF',
-              borderRadius: '16px',
-              border: '1px solid #E2E8F4',
-              boxShadow: '0 4px 16px rgba(29,110,245,0.06)',
-              overflow: 'hidden',
-            }}>
-              <div style={{
-                padding: '15px 20px',
-                background: '#F8FAFF',
-                borderBottom: '1px solid #E2E8F4',
-              }}>
-                <p style={{ fontWeight: 700, fontSize: '13px', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Personal Details
-                </p>
+            <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+              <div className="border-b border-slate-200 bg-slate-50 px-5 py-4">
+                <h3 className="text-sm font-bold uppercase tracking-wide text-slate-600">Personal Details</h3>
               </div>
-              <InfoRow icon={User} label="Full Name" value={profile?.full_name} />
-              <InfoRow icon={IdCard} label="Employee ID" value={profile?.employee_id || user?.employee_id} highlight />
-              <InfoRow icon={Mail} label="Email Address" value={profile?.email} />
-              <InfoRow icon={Building2} label="Department" value={profile?.department} />
-              <InfoRow icon={Briefcase} label="Designation" value={profile?.designation} />
-              <InfoRow icon={Shield} label="Role" value={profile?.role === 'admin' ? 'Administrator' : 'Employee'} />
-              <div style={{ borderBottom: 'none' }}>
-                <InfoRow
-                  icon={Calendar}
-                  label="Joined On"
-                  value={profile?.created_at
-                    ? new Date(profile.created_at).toLocaleDateString('en-US', {
-                        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-                      })
-                    : '—'
-                  }
-                />
+              <div className="divide-y divide-slate-100">
+                {rows.map(({ icon: Icon, label, value, highlight }) => (
+                  <div className="flex items-center gap-4 px-5 py-4 transition hover:bg-sky-50/40" key={label}>
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-sky-100 bg-sky-50 text-sky-600">
+                      <Icon size={18} />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{label}</p>
+                      <p className={`mt-1 font-semibold ${highlight ? 'text-sky-600' : 'text-slate-950'}`}>{value || '-'}</p>
+                    </div>
+                    {label === 'Role' && <Badge>{value}</Badge>}
+                  </div>
+                ))}
               </div>
-            </div>
+            </section>
           </div>
         )}
-      </div>
+      </main>
     </DashboardLayout>
   );
 };

@@ -1,164 +1,116 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
-  LayoutDashboard, Users, UserPlus, User, LogOut, Building2, ChevronRight,
+  Building2,
+  ClipboardList,
+  LayoutDashboard,
+  LogOut,
+  Settings,
+  User,
+  Users,
 } from 'lucide-react';
 
 const adminLinks = [
-  { label: 'Dashboard',         icon: LayoutDashboard, path: '/admin/dashboard'  },
-  { label: 'Employees',         icon: Users,           path: '/admin/employees'  },
-  { label: 'Register Employee', icon: UserPlus,        path: '/admin/register'   },
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard' },
+  { label: 'Employees', icon: Users, path: '/admin/employees' },
+  { label: 'Submissions', icon: ClipboardList, path: '/admin/submissions' },
+  { label: 'Settings', icon: Settings, path: '/admin/settings' },
 ];
 
 const employeeLinks = [
-  { label: 'My Profile', icon: User, path: '/employee/profile' },
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/employee/dashboard' },
+  { label: 'Timesheet', icon: ClipboardList, path: '/employee/timesheet' },
+  { label: 'Profile', icon: User, path: '/employee/profile' },
 ];
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-
   const links = user?.role === 'admin' ? adminLinks : employeeLinks;
 
-  const handleLogout = () => { logout(); navigate('/login'); };
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
-    <aside style={{
-      width:'256px', minHeight:'100vh',
-      background:'#FFFFFF',
-      borderRight:'1px solid #E8EDF5',
-      display:'flex', flexDirection:'column', flexShrink:0,
-      boxShadow:'1px 0 0 #E8EDF5',
-    }}>
-
-      {/* ── Brand ── */}
-      <div style={{
-        padding:'0 20px',
-        height:'64px',
-        display:'flex', alignItems:'center', gap:'10px',
-        borderBottom:'1px solid #E8EDF5',
-      }}>
-        <div style={{
-          width:'34px', height:'34px',
-          background:'linear-gradient(135deg, #1A56DB, #1045B8)',
-          borderRadius:'9px',
-          display:'flex', alignItems:'center', justifyContent:'center',
-          flexShrink:0,
-        }}>
-          <Building2 size={18} color="#FFFFFF" />
+    <>
+    <aside className="hidden w-64 shrink-0 flex-col border-r border-slate-200 bg-white md:flex">
+      <div className="flex h-16 items-center gap-3 border-b border-slate-200 px-5">
+        <div className="flex h-9 w-9 items-center justify-center rounded-md bg-blue-600 text-white">
+          <Building2 size={19} />
         </div>
         <div>
-          <p style={{ fontWeight:800, fontSize:'14px', color:'#0F172A', letterSpacing:'-0.2px' }}>EmpManager</p>
-          <p style={{ fontSize:'10px', color:'#94A3B8', fontWeight:400, marginTop:'1px' }}>
-            {user?.role === 'admin' ? 'Administrator' : 'Employee Portal'}
-          </p>
+          <p className="text-sm font-black text-slate-950">EmpManager</p>
+          <p className="text-[11px] text-slate-400">{user?.role === 'admin' ? 'Administrator' : 'Employee Portal'}</p>
         </div>
       </div>
 
-      {/* ── User Card ── */}
-      <div style={{ padding:'16px', borderBottom:'1px solid #E8EDF5' }}>
-        <div style={{
-          display:'flex', alignItems:'center', gap:'10px',
-          padding:'10px 12px',
-          background:'#F4F7FD',
-          borderRadius:'10px',
-          border:'1px solid #DDE5F0',
-        }}>
-          <div style={{
-            width:'34px', height:'34px', flexShrink:0,
-            background:'linear-gradient(135deg, #1A56DB, #0EA5E9)',
-            borderRadius:'50%',
-            display:'flex', alignItems:'center', justifyContent:'center',
-            fontWeight:700, color:'white', fontSize:'13px',
-          }}>
+      <div className="border-b border-slate-200 p-4">
+        <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-blue-50/50 p-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-sm font-bold text-white">
             {user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
           </div>
-          <div style={{ overflow:'hidden', flex:1 }}>
-            <p style={{
-              fontWeight:600, fontSize:'13px', color:'#0F172A',
-              whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis',
-            }}>
-              {user?.full_name}
-            </p>
-            <p style={{ fontSize:'11px', color:'#1A56DB', fontWeight:500, marginTop:'1px' }}>
-              {user?.employee_id}
-            </p>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-slate-950">{user?.full_name}</p>
+            <p className="mt-0.5 text-xs font-medium text-sky-600">{user?.employee_id}</p>
           </div>
         </div>
       </div>
 
-      {/* ── Navigation ── */}
-      <nav style={{ flex:1, padding:'12px 10px' }}>
-        <p style={{
-          fontSize:'10px', fontWeight:700, textTransform:'uppercase',
-          letterSpacing:'0.9px', color:'#B0BAC9',
-          padding:'0 8px', marginBottom:'6px',
-        }}>
-          Main Menu
-        </p>
-
-        {links.map(({ label, icon: Icon, path }) => {
-          const active = location.pathname === path;
-          return (
-            <button
-              key={path}
-              onClick={() => navigate(path)}
-              style={{
-                width:'100%',
-                display:'flex', alignItems:'center', gap:'9px',
-                padding:'10px 10px',
-                borderRadius:'8px',
-                border:'none',
-                cursor:'pointer',
-                marginBottom:'2px',
-                transition:'all 0.18s ease',
-                background: active ? 'linear-gradient(135deg, #1A56DB, #1045B8)' : 'transparent',
-                color: active ? '#FFFFFF' : '#475569',
-                fontFamily:'Inter, sans-serif',
-                fontSize:'13px',
-                fontWeight: active ? 600 : 400,
-                boxShadow: active ? '0 2px 10px rgba(26,86,219,0.25)' : 'none',
-                textAlign:'left',
-              }}
-              onMouseEnter={e => { if (!active) { e.currentTarget.style.background='#F0F5FF'; e.currentTarget.style.color='#1A56DB'; } }}
-              onMouseLeave={e => { if (!active) { e.currentTarget.style.background='transparent'; e.currentTarget.style.color='#475569'; } }}
-            >
-              <Icon size={16} style={{ flexShrink:0 }} />
-              <span style={{ flex:1 }}>{label}</span>
-              {active && <ChevronRight size={13} />}
-            </button>
-          );
-        })}
+      <nav className="flex-1 overflow-y-auto p-3">
+        <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Workspace</p>
+        <div className="space-y-1">
+          {links.map(({ label, icon: Icon, path }) => {
+            const active = location.pathname === path;
+            return (
+              <button
+                key={path}
+                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition ${
+                  active
+                    ? 'bg-blue-600 font-semibold text-white shadow-sm'
+                    : 'font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-700'
+                }`}
+                onClick={() => navigate(path)}
+                type="button"
+              >
+                <Icon size={17} />
+                <span className="flex-1">{label}</span>
+              </button>
+            );
+          })}
+        </div>
       </nav>
 
-      {/* ── Logout ── */}
-      <div style={{ padding:'12px 10px 20px', borderTop:'1px solid #E8EDF5' }}>
-        <button
-          onClick={handleLogout}
-          style={{
-            width:'100%',
-            display:'flex', alignItems:'center', gap:'9px',
-            padding:'10px 10px',
-            borderRadius:'8px',
-            border:'none',
-            cursor:'pointer',
-            background:'transparent',
-            color:'#94A3B8',
-            fontFamily:'Inter, sans-serif',
-            fontSize:'13px',
-            fontWeight:500,
-            transition:'all 0.18s ease',
-            textAlign:'left',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background='#FEF2F2'; e.currentTarget.style.color='#DC2626'; }}
-          onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.color='#94A3B8'; }}
-        >
-          <LogOut size={16} style={{ flexShrink:0 }} />
+      <div className="border-t border-slate-200 p-3">
+        <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 transition hover:bg-red-50 hover:text-red-600" onClick={handleLogout} type="button">
+          <LogOut size={17} />
           Sign Out
         </button>
       </div>
     </aside>
+    <nav className="fixed inset-x-0 bottom-0 z-20 flex border-t border-slate-200 bg-white/95 px-2 py-2 shadow-lg backdrop-blur md:hidden">
+      {links.slice(0, 4).map(({ label, icon: Icon, path }) => {
+        const active = location.pathname === path;
+        return (
+          <button
+            className={`flex flex-1 flex-col items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-semibold ${active ? 'bg-sky-50 text-sky-700' : 'text-slate-500'}`}
+            key={path}
+            onClick={() => navigate(path)}
+            type="button"
+          >
+            <Icon size={17} />
+            <span className="max-w-full truncate">{label.replace(' Timesheet', '')}</span>
+          </button>
+        );
+      })}
+      <button className="flex flex-1 flex-col items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-semibold text-slate-500" onClick={handleLogout} type="button">
+        <LogOut size={17} />
+        <span>Logout</span>
+      </button>
+    </nav>
+    </>
   );
 };
 

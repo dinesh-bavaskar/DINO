@@ -1,155 +1,140 @@
 import { useEffect, useState } from 'react';
+import { Power, Plus, Search, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import Navbar from '../../components/common/Navbar';
 import Loader from '../../components/common/Loader';
-import { getEmployees } from '../../services/authService';
-import { Search, Users } from 'lucide-react';
-
-const avatarColors = ['#1D6EF5', '#059669', '#7C3AED', '#D97706', '#DC2626', '#0EA5E9', '#DB2777'];
+import { Badge } from '../../components/ui';
+import { buttonClass, inputClass } from '../../components/uiClasses';
+import { getEmployees, updateEmployeeStatus } from '../../services/authService';
 
 const EmployeeList = () => {
+  const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
-  const [filtered, setFiltered] = useState([]);
+  const [meta, setMeta] = useState(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    getEmployees()
-      .then(res => {
+    const timeout = setTimeout(() => {
+      setLoading(true);
+      getEmployees({ search, page, page_size: 10 })
+      .then((res) => {
         setEmployees(res.data);
-        setFiltered(res.data);
+        setMeta(res.meta);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+    }, 250);
+    return () => clearTimeout(timeout);
+  }, [search, page]);
+
+  const loadEmployees = () => {
+    setLoading(true);
+    getEmployees({ search, page, page_size: 10 })
+      .then((res) => {
+        setEmployees(res.data);
+        setMeta(res.meta);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  };
 
   const handleSearch = (e) => {
-    const q = e.target.value.toLowerCase();
-    setSearch(q);
-    setFiltered(employees.filter(emp =>
-      emp.full_name.toLowerCase().includes(q) ||
-      emp.employee_id.toLowerCase().includes(q) ||
-      emp.department.toLowerCase().includes(q) ||
-      emp.designation.toLowerCase().includes(q)
-    ));
+    setSearch(e.target.value);
+    setPage(1);
+  };
+
+  const toggleStatus = async (employee) => {
+    await updateEmployeeStatus(employee.id, !employee.is_active);
+    loadEmployees();
   };
 
   return (
     <DashboardLayout>
-      <Navbar title="Employee List" subtitle={`${employees.length} employees total`} />
-
-      <div style={{ padding: '28px', animation: 'fadeIn 0.4s ease' }}>
-        {/* Header Row */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          marginBottom: '20px', flexWrap: 'wrap', gap: '14px',
-        }}>
+      <Navbar title="Employee Management" subtitle={`${meta?.count ?? employees.length} employees total`} />
+      <main className="flex-1 overflow-auto bg-slate-50 p-4 md:p-7">
+        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="section-title">All Employees</p>
-            <p className="section-subtitle">Browse and manage all team members</p>
+            <h2 className="text-xl font-bold text-slate-950">Employees</h2>
+            <p className="text-sm text-slate-500">Search, add, and review team records.</p>
           </div>
-          {/* Search */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '8px',
-            background: '#FFFFFF',
-            border: '1.5px solid #E2E8F4',
-            borderRadius: '10px',
-            padding: '10px 16px',
-            minWidth: '260px',
-            boxShadow: '0 1px 4px rgba(29,110,245,0.06)',
-            transition: 'border-color 0.2s',
-          }}>
-            <Search size={15} color="#94A3B8" />
-            <input
-              id="employee-search"
-              type="text"
-              placeholder="Search by name, ID, department..."
-              value={search}
-              onChange={handleSearch}
-              style={{
-                background: 'transparent', border: 'none', outline: 'none',
-                color: '#0F172A', fontSize: '13px',
-                fontFamily: 'Inter, sans-serif', width: '100%',
-              }}
-            />
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="relative w-full sm:w-80">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input className={`${inputClass} pl-9`} onChange={handleSearch} placeholder="Search employees" value={search} />
+            </div>
+            <button className={buttonClass.primary} onClick={() => navigate('/admin/register')} type="button">
+              <Plus size={16} /> Add Employee
+            </button>
           </div>
         </div>
 
-        {loading ? (
-          <Loader text="Loading employees..." />
-        ) : (
-          <div className="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Employee</th>
-                  <th>Employee ID</th>
-                  <th>Department</th>
-                  <th>Designation</th>
-                  <th>Joined</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.length === 0 ? (
+        {loading ? <Loader text="Loading employees..." /> : (
+          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead className="bg-slate-50">
                   <tr>
-                    <td colSpan={7} style={{ textAlign: 'center', padding: '56px', color: '#94A3B8' }}>
-                      <Users size={40} style={{ margin: '0 auto 12px', display: 'block', opacity: 0.25 }} />
-                      {search ? 'No employees match your search.' : 'No employees found. Register the first employee!'}
-                    </td>
+                    {['#', 'Employee', 'Employee ID', 'Department', 'Designation', 'Joined', 'Status', 'Action'].map((header) => (
+                      <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-400" key={header}>{header}</th>
+                    ))}
                   </tr>
-                ) : filtered.map((emp, idx) => (
-                  <tr key={emp.id}>
-                    <td style={{ color: '#94A3B8', fontSize: '13px', fontWeight: 500 }}>{idx + 1}</td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{
-                          width: '36px', height: '36px',
-                          background: avatarColors[idx % avatarColors.length],
-                          borderRadius: '9px',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          color: 'white', fontWeight: 700, fontSize: '14px', flexShrink: 0,
-                        }}>
-                          {emp.full_name.charAt(0).toUpperCase()}
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {employees.length === 0 ? (
+                    <tr>
+                      <td className="px-4 py-14 text-center text-sm text-slate-400" colSpan={8}>
+                        <Users className="mx-auto mb-3 opacity-30" size={40} />
+                        {search ? 'No employees match your search.' : 'No employees found. Register the first employee!'}
+                      </td>
+                    </tr>
+                  ) : employees.map((emp, index) => (
+                    <tr className="hover:bg-slate-50" key={emp.id}>
+                      <td className="px-4 py-3 text-sm font-medium text-slate-400">{(page - 1) * 10 + index + 1}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-blue-600 text-sm font-bold text-white">
+                            {emp.full_name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-slate-950">{emp.full_name}</p>
+                            <p className="text-xs text-slate-400">{emp.email}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p style={{ fontWeight: 600, fontSize: '14px', color: '#0F172A' }}>{emp.full_name}</p>
-                          <p style={{ fontSize: '11px', color: '#94A3B8' }}>{emp.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td><span className="badge badge-primary">{emp.employee_id}</span></td>
-                    <td>
-                      <span style={{
-                        background: '#F0F4FC',
-                        color: '#475569',
-                        padding: '4px 10px',
-                        borderRadius: '6px',
-                        fontSize: '12px',
-                        fontWeight: 500,
-                      }}>
-                        {emp.department}
-                      </span>
-                    </td>
-                    <td style={{ color: '#475569', fontSize: '13px' }}>{emp.designation}</td>
-                    <td style={{ color: '#94A3B8', fontSize: '12px' }}>
-                      {new Date(emp.created_at).toLocaleDateString('en-US', {
-                        month: 'short', day: 'numeric', year: 'numeric'
-                      })}
-                    </td>
-                    <td>
-                      <span className={`badge ${emp.is_active ? 'badge-success' : 'badge-danger'}`}>
-                        {emp.is_active ? '● Active' : '● Inactive'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      </td>
+                      <td className="px-4 py-3"><Badge tone="blue">{emp.employee_id}</Badge></td>
+                      <td className="px-4 py-3"><Badge tone="slate">{emp.department}</Badge></td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{emp.designation}</td>
+                      <td className="px-4 py-3 text-xs text-slate-400">{new Date(emp.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                      <td className="px-4 py-3"><Badge tone={emp.is_active ? 'green' : 'red'}>{emp.is_active ? 'Active' : 'Inactive'}</Badge></td>
+                      <td className="px-4 py-3">
+                        <button
+                          className={`inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-semibold transition ${emp.is_active ? 'bg-red-50 text-red-700 hover:bg-red-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}
+                          onClick={() => toggleStatus(emp)}
+                          type="button"
+                        >
+                          <Power size={14} /> {emp.is_active ? 'Deactivate' : 'Activate'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {meta && (
+              <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3 text-sm text-slate-500">
+                <span>Page {page}</span>
+                <div className="flex gap-2">
+                  <button className={buttonClass.outline} disabled={!meta.previous} onClick={() => setPage((value) => Math.max(1, value - 1))} type="button">Previous</button>
+                  <button className={buttonClass.outline} disabled={!meta.next} onClick={() => setPage((value) => value + 1)} type="button">Next</button>
+                </div>
+              </div>
+            )}
           </div>
         )}
-      </div>
+      </main>
     </DashboardLayout>
   );
 };

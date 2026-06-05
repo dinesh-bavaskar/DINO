@@ -1,21 +1,56 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Building2, Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { adminLogin, employeeLogin } from '../../services/authService';
-import { Eye, EyeOff, Lock, User, IdCard, Building2, Users, BarChart3, ShieldCheck } from 'lucide-react';
+
+const emptyForm = { username: '', employee_id: '', password: '' };
+const legacyCredentialKeys = [
+  'username',
+  'employee_id',
+  'email',
+  'password',
+  'admin_username',
+  'admin_password',
+  'employee_password',
+  'remembered_username',
+  'remembered_employee_id',
+];
 
 const Login = () => {
   const [mode, setMode] = useState('admin');
-  const [form, setForm] = useState({ username: '', employee_id: '', password: '' });
+  const [form, setForm] = useState(emptyForm);
   const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    setForm(emptyForm);
+    legacyCredentialKeys.forEach((key) => {
+      localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
+    });
+    document.cookie.split(';').forEach((cookie) => {
+      const name = cookie.split('=')[0]?.trim();
+      if (legacyCredentialKeys.includes(name)) {
+        document.cookie = `${name}=; Max-Age=0; path=/`;
+      }
+    });
+  }, []);
+
   const handleChange = (e) => {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     setError('');
+  };
+
+  const handleModeChange = (nextMode) => {
+    setMode(nextMode);
+    setForm(emptyForm);
+    setError('');
+    setShowPassword(false);
   };
 
   const handleSubmit = async (e) => {
@@ -23,240 +58,295 @@ const Login = () => {
     setLoading(true);
     setError('');
     try {
-      let response;
-      if (mode === 'admin') {
-        response = await adminLogin({ username: form.username, password: form.password });
-      } else {
-        response = await employeeLogin({ employee_id: form.employee_id, password: form.password });
-      }
-      login(response.data);
-      navigate(response.data.role === 'admin' ? '/admin/dashboard' : '/employee/profile');
+      const response = mode === 'admin'
+        ? await adminLogin({ username: form.username, password: form.password })
+        : await employeeLogin({ employee_id: form.employee_id, password: form.password });
+      login(response.data, remember);
+      navigate(response.data.role === 'admin' ? '/admin/dashboard' : '/employee/dashboard');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Invalid credentials. Please check and try again.');
+      if (!err.response) {
+        setError('Backend server is not running. Please start the Django API and try again.');
+      } else {
+        setError(err.response.data?.detail || 'Invalid credentials. Please check and try again.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const features = [
-    { icon: ShieldCheck, title: 'Secure Authentication', desc: 'JWT-based token authentication with role-based access control' },
-    { icon: Users,       title: 'Team Management',     desc: 'Manage employees, departments and designations in one place' },
-    { icon: BarChart3,   title: 'Real-time Insights',  desc: 'Live dashboard with team statistics and activity overview' },
-  ];
-
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', fontFamily: 'Inter, sans-serif' }}>
-
-      {/* ── Left: Brand Panel ── */}
-      <div style={{
-        width: '42%',
-        background: 'linear-gradient(160deg, #1A56DB 0%, #1045B8 55%, #0C338A 100%)',
+    <div
+      style={{
+        minHeight: '100vh',
         display: 'flex',
-        flexDirection: 'column',
-        padding: '52px 48px',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
-        {/* Geometric Decoration */}
-        <div style={{ position:'absolute', top:'-60px', right:'-60px', width:'280px', height:'280px', borderRadius:'50%', border:'1px solid rgba(255,255,255,0.08)' }} />
-        <div style={{ position:'absolute', bottom:'-80px', left:'-40px', width:'320px', height:'320px', borderRadius:'50%', border:'1px solid rgba(255,255,255,0.06)' }} />
-        <div style={{ position:'absolute', top:'40%', right:'-30px', width:'180px', height:'180px', borderRadius:'50%', background:'rgba(255,255,255,0.04)' }} />
-
-        {/* Logo */}
-        <div style={{ display:'flex', alignItems:'center', gap:'12px', marginBottom:'60px', position:'relative' }}>
-          <div style={{
-            width:'44px', height:'44px',
-            background:'rgba(255,255,255,0.15)',
-            borderRadius:'12px',
-            display:'flex', alignItems:'center', justifyContent:'center',
-            border:'1px solid rgba(255,255,255,0.25)',
-          }}>
-            <Building2 size={22} color="#FFFFFF" />
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#eef2f7',
+        fontFamily: "'DM Sans', 'Segoe UI', sans-serif",
+        padding: '24px',
+      }}
+    >
+      <div
+        style={{
+          background: '#fff',
+          borderRadius: '10px',
+          boxShadow: '0 8px 40px rgba(30,60,120,0.10)',
+          padding: '44px 40px 36px',
+          width: '100%',
+          maxWidth: '500px',
+        }}
+      >
+        {/* Logo & Title */}
+        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '18px' }}>
+            <div
+              style={{
+                background: '#eff4ff',
+                borderRadius: '8px',
+                width: '34px',
+                height: '34px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Building2 size={18} color="#2563eb" />
+            </div>
+            <span style={{ fontWeight: '700', fontSize: '17px', color: '#2563eb', letterSpacing: '-0.2px' }}>
+              EMS Portal
+            </span>
           </div>
-          <div>
-            <p style={{ fontWeight:800, fontSize:'17px', color:'#FFFFFF', letterSpacing:'-0.3px' }}>EmpManager</p>
-            <p style={{ fontSize:'11px', color:'rgba(255,255,255,0.55)', fontWeight:400 }}>Employee Management System</p>
-          </div>
-        </div>
-
-        {/* Headline */}
-        <div style={{ position:'relative', flex:1, display:'flex', flexDirection:'column', justifyContent:'center' }}>
-          <h1 style={{
-            fontSize:'34px', fontWeight:800, color:'#FFFFFF',
-            lineHeight:1.2, marginBottom:'16px', letterSpacing:'-0.5px',
-          }}>
-            Manage your team<br />
-            <span style={{ color:'rgba(255,255,255,0.65)' }}>with confidence.</span>
+          <h1 style={{ fontSize: '26px', fontWeight: '800', color: '#0f172a', margin: '0 0 8px', lineHeight: 1.25 }}>
+            Welcome to your<br />Timesheet
           </h1>
-          <p style={{ fontSize:'15px', color:'rgba(255,255,255,0.65)', lineHeight:1.7, marginBottom:'44px', maxWidth:'340px' }}>
-            A centralized platform for managing employees, roles, departments, and organizational data.
+          <p style={{ fontSize: '13.5px', color: '#64748b', margin: 0 }}>
+            Please enter your credentials to access the Employee Timesheet portal
           </p>
-
-          {/* Feature List */}
-          <div style={{ display:'flex', flexDirection:'column', gap:'16px' }}>
-            {features.map(({ icon: Icon, title, desc }) => (
-              <div key={title} style={{ display:'flex', alignItems:'flex-start', gap:'14px' }}>
-                <div style={{
-                  width:'36px', height:'36px', flexShrink:0,
-                  background:'rgba(255,255,255,0.12)',
-                  borderRadius:'9px',
-                  display:'flex', alignItems:'center', justifyContent:'center',
-                  marginTop:'2px',
-                }}>
-                  <Icon size={17} color="rgba(255,255,255,0.9)" />
-                </div>
-                <div>
-                  <p style={{ fontSize:'13px', fontWeight:600, color:'#FFFFFF', marginBottom:'2px' }}>{title}</p>
-                  <p style={{ fontSize:'12px', color:'rgba(255,255,255,0.5)', lineHeight:1.5 }}>{desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
 
-        {/* Footer */}
-        <p style={{ fontSize:'11px', color:'rgba(255,255,255,0.3)', position:'relative', marginTop:'40px' }}>
-          © 2025 EmpManager. All rights reserved.
-        </p>
-      </div>
+        {/* Tab Toggle */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            background: '#f1f5f9',
+            borderRadius: '10px',
+            padding: '4px',
+            marginBottom: '24px',
+            gap: '4px',
+          }}
+        >
+          {[
+            { key: 'admin', label: 'Admin' },
+            { key: 'employee', label: 'Employee' },
+          ].map((item) => (
+            <button
+              key={item.key}
+              onClick={() => handleModeChange(item.key)}
+              type="button"
+              style={{
+                borderRadius: '7px',
+                padding: '9px 0',
+                fontSize: '13.5px',
+                fontWeight: '700',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.18s',
+                background: mode === item.key ? '#fff' : 'transparent',
+                color: mode === item.key ? '#2563eb' : '#64748b',
+                boxShadow: mode === item.key ? '0 1px 6px rgba(30,60,120,0.10)' : 'none',
+              }}
+            >
+              {item.label} Login
+            </button>
+          ))}
+        </div>
 
-      {/* ── Right: Form Panel ── */}
-      <div style={{
-        flex:1,
-        display:'flex',
-        alignItems:'center',
-        justifyContent:'center',
-        background:'#F7F9FC',
-        padding:'40px 32px',
-      }}>
-        <div style={{ width:'100%', maxWidth:'400px', animation:'fadeIn 0.35s ease' }}>
-
-          {/* Heading */}
-          <div style={{ marginBottom:'32px' }}>
-            <h2 style={{ fontSize:'24px', fontWeight:800, color:'#0F172A', marginBottom:'6px', letterSpacing:'-0.4px' }}>
-              Sign in to your account
-            </h2>
-            <p style={{ fontSize:'14px', color:'#64748B' }}>
-              Enter your credentials below to continue
-            </p>
+        {/* Form */}
+        <form autoComplete="off" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Identifier field */}
+          <div>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: '600',
+                color: '#334155',
+                marginBottom: '7px',
+              }}
+            >
+              {mode === 'admin' ? 'Username' : 'Employee ID'}
+            </label>
+            <div style={{ position: 'relative' }}>
+              {mode === 'admin'
+                ? <User size={15} style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                : <Mail size={15} style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />}
+              <input
+                name={mode === 'admin' ? 'username' : 'employee_id'}
+                onChange={handleChange}
+                placeholder={mode === 'admin' ? 'Enter username' : 'Enter employee ID'}
+                required
+                type="text"
+                value={mode === 'admin' ? form.username : form.employee_id}
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck="false"
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  border: '1.5px solid #e2e8f0',
+                  borderRadius: '10px',
+                  padding: '11px 14px 11px 38px',
+                  fontSize: '14px',
+                  color: '#0f172a',
+                  background: '#fff',
+                  outline: 'none',
+                  transition: 'border-color 0.15s',
+                }}
+                onFocus={e => (e.target.style.borderColor = '#2563eb')}
+                onBlur={e => (e.target.style.borderColor = '#e2e8f0')}
+              />
+            </div>
           </div>
 
-          {/* Role Toggle */}
-          <div style={{
-            display:'flex',
-            background:'#EAEFF8',
-            borderRadius:'10px',
-            padding:'4px',
-            marginBottom:'28px',
-            border:'1px solid #DDE4EF',
-          }}>
-            {[
-              { key:'admin',    label:'Admin'    },
-              { key:'employee', label:'Employee' },
-            ].map(({ key, label }) => (
-              <button
-                key={key}
-                onClick={() => { setMode(key); setError(''); }}
+          {/* Password field */}
+          <div>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: '600',
+                color: '#334155',
+                marginBottom: '7px',
+              }}
+            >
+              Password
+            </label>
+            <div style={{ position: 'relative' }}>
+              <Lock size={15} style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+              <input
+                name="password"
+                onChange={handleChange}
+                placeholder="••••••••"
+                required
+                type={showPassword ? 'text' : 'password'}
+                value={form.password}
+                autoComplete="new-password"
                 style={{
-                  flex:1,
-                  padding:'10px 0',
-                  border:'none',
-                  borderRadius:'7px',
-                  cursor:'pointer',
-                  fontFamily:'Inter, sans-serif',
-                  fontSize:'13px',
-                  fontWeight:600,
-                  transition:'all 0.22s ease',
-                  background: mode === key ? '#FFFFFF' : 'transparent',
-                  color: mode === key ? '#1A56DB' : '#64748B',
-                  boxShadow: mode === key ? '0 1px 6px rgba(26,86,219,0.14)' : 'none',
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  border: '1.5px solid #e2e8f0',
+                  borderRadius: '10px',
+                  padding: '11px 40px 11px 38px',
+                  fontSize: '14px',
+                  color: '#0f172a',
+                  background: '#fff',
+                  outline: 'none',
+                  transition: 'border-color 0.15s',
+                }}
+                onFocus={e => (e.target.style.borderColor = '#2563eb')}
+                onBlur={e => (e.target.style.borderColor = '#e2e8f0')}
+              />
+              <button
+                onClick={() => setShowPassword((v) => !v)}
+                type="button"
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#94a3b8',
+                  padding: 0,
+                  display: 'flex',
                 }}
               >
-                {label} Login
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
-            ))}
+            </div>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit}>
-            {/* Username / Employee ID */}
-            <div style={{ marginBottom:'18px' }}>
-              <label style={{ display:'block', fontSize:'12px', fontWeight:600, color:'#374151', marginBottom:'7px', letterSpacing:'0.3px' }}>
-                {mode === 'admin' ? 'USERNAME' : 'EMPLOYEE ID'}
-              </label>
-              <div style={{ position:'relative' }}>
-                <div style={{ position:'absolute', left:'13px', top:'50%', transform:'translateY(-50%)', color:'#94A3B8' }}>
-                  {mode === 'admin' ? <User size={15} /> : <IdCard size={15} />}
-                </div>
-                <input
-                  id={mode === 'admin' ? 'username' : 'employee_id'}
-                  name={mode === 'admin' ? 'username' : 'employee_id'}
-                  type="text"
-                  placeholder={mode === 'admin' ? 'Enter username' : 'e.g. EMP001'}
-                  value={mode === 'admin' ? form.username : form.employee_id}
-                  onChange={handleChange}
-                  required
-                  autoComplete="username"
-                  className="form-input"
-                  style={{ paddingLeft:'40px' }}
-                />
-              </div>
-            </div>
-
-            {/* Password */}
-            <div style={{ marginBottom:'24px' }}>
-              <label style={{ display:'block', fontSize:'12px', fontWeight:600, color:'#374151', marginBottom:'7px', letterSpacing:'0.3px' }}>
-                PASSWORD
-              </label>
-              <div style={{ position:'relative' }}>
-                <div style={{ position:'absolute', left:'13px', top:'50%', transform:'translateY(-50%)', color:'#94A3B8' }}>
-                  <Lock size={15} />
-                </div>
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Enter your password"
-                  value={form.password}
-                  onChange={handleChange}
-                  required
-                  autoComplete="current-password"
-                  className="form-input"
-                  style={{ paddingLeft:'40px', paddingRight:'42px' }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(p => !p)}
-                  style={{
-                    position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)',
-                    background:'transparent', border:'none', cursor:'pointer', color:'#94A3B8',
-                    display:'flex', padding:0,
-                  }}
-                >
-                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-                </button>
-              </div>
-            </div>
-
-            {/* Error */}
-            {error && (
-              <div className="alert alert-error" style={{ marginBottom:'18px', display:'flex', alignItems:'center', gap:'8px', fontSize:'13px' }}>
-                <span>⚠</span> {error}
-              </div>
-            )}
-
-            {/* Submit */}
+          {/* Remember me + Forgot password */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: '#475569', fontWeight: '500' }}>
+              <input
+                checked={remember}
+                onChange={e => setRemember(e.target.checked)}
+                type="checkbox"
+                style={{ width: '15px', height: '15px', accentColor: '#2563eb', cursor: 'pointer' }}
+              />
+              Remember me
+            </label>
             <button
-              id="login-btn"
-              type="submit"
-              disabled={loading}
-              className="btn-primary"
-              style={{ width:'100%', fontSize:'14px', padding:'13px', letterSpacing:'0.2px' }}
+              type="button"
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#2563eb',
+                fontSize: '13px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                padding: 0,
+              }}
             >
-              {loading ? 'Signing in…' : 'Sign In'}
+              Forgot Password?
             </button>
-          </form>
-        </div>
+          </div>
+
+          {/* Error */}
+          {error && (
+            <div
+              style={{
+                background: '#fef2f2',
+                border: '1.5px solid #fecaca',
+                borderRadius: '9px',
+                padding: '11px 14px',
+                fontSize: '13px',
+                color: '#dc2626',
+                fontWeight: '500',
+              }}
+            >
+              {error}
+            </div>
+          )}
+
+          {/* Submit */}
+          <button
+            disabled={loading}
+            type="submit"
+            style={{
+              width: '100%',
+              background: loading ? '#93c5fd' : '#2563eb',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '13px',
+              fontSize: '15px',
+              fontWeight: '700',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              transition: 'background 0.18s',
+              letterSpacing: '-0.1px',
+            }}
+            onMouseEnter={e => { if (!loading) e.target.style.background = '#1d4ed8'; }}
+            onMouseLeave={e => { if (!loading) e.target.style.background = '#2563eb'; }}
+          >
+            {loading ? 'Signing in...' : (
+              <>
+                Sign In
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </>
+            )}
+          </button>
+        </form>
+        
       </div>
     </div>
   );

@@ -8,6 +8,10 @@ import Dashboard from '../pages/admin/Dashboard';
 import EmployeeList from '../pages/admin/EmployeeList';
 import RegisterEmployee from '../pages/admin/RegisterEmployee';
 import Profile from '../pages/employee/Profile';
+import EmployeeDashboard from '../pages/employee/Dashboard';
+import TodayTimesheet from '../pages/employee/TodayTimesheet';
+import EmployeeSubmissions from '../pages/admin/EmployeeSubmissions';
+import AdminSettings from '../pages/admin/Settings';
 
 const AppRoutes = () => {
   return (
@@ -49,8 +53,43 @@ const AppRoutes = () => {
               </AdminRoute>
             }
           />
+          <Route
+            path="/admin/submissions"
+            element={
+              <AdminRoute>
+                <EmployeeSubmissions />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/settings"
+            element={
+              <AdminRoute>
+                <AdminSettings />
+              </AdminRoute>
+            }
+          />
 
           {/* Employee Routes */}
+          <Route
+            path="/employee/dashboard"
+            element={
+              <EmployeeRoute>
+                <EmployeeDashboard />
+              </EmployeeRoute>
+            }
+          />
+          <Route
+            path="/employee/timesheet"
+            element={
+              <EmployeeRoute>
+                <TodayTimesheet />
+              </EmployeeRoute>
+            }
+          />
+          <Route path="/employee/add-work" element={<Navigate to="/employee/timesheet" replace />} />
+          <Route path="/employee/today-timesheet" element={<Navigate to="/employee/timesheet" replace />} />
+          <Route path="/employee/submissions" element={<Navigate to="/employee/timesheet" replace />} />
           <Route
             path="/employee/profile"
             element={

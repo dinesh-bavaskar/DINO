@@ -1,36 +1,45 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useState } from 'react';
 
 const AuthContext = createContext(null);
 
+const authKeys = ['access_token', 'refresh_token', 'user_info'];
+
+const getStoredItem = (key) => sessionStorage.getItem(key) || localStorage.getItem(key);
+
+const clearAuthStorage = () => {
+  authKeys.forEach((key) => {
+    sessionStorage.removeItem(key);
+    localStorage.removeItem(key);
+  });
+};
+
+const getStoredUser = () => {
+  const stored = getStoredItem('user_info');
+  const token = getStoredItem('access_token');
+  return stored && token ? JSON.parse(stored) : null;
+};
+
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(getStoredUser);
+  const loading = false;
 
-  useEffect(() => {
-    const stored = localStorage.getItem('user_info');
-    const token = localStorage.getItem('access_token');
-    if (stored && token) {
-      setUser(JSON.parse(stored));
-    }
-    setLoading(false);
-  }, []);
-
-  const login = (tokens) => {
-    localStorage.setItem('access_token', tokens.access);
-    localStorage.setItem('refresh_token', tokens.refresh);
+  const login = (tokens, remember = false) => {
+    clearAuthStorage();
+    const storage = remember ? localStorage : sessionStorage;
+    storage.setItem('access_token', tokens.access);
+    storage.setItem('refresh_token', tokens.refresh);
     const info = {
       role: tokens.role,
       full_name: tokens.full_name,
       employee_id: tokens.employee_id,
     };
-    localStorage.setItem('user_info', JSON.stringify(info));
+    storage.setItem('user_info', JSON.stringify(info));
     setUser(info);
   };
 
   const logout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user_info');
+    clearAuthStorage();
     setUser(null);
   };
 

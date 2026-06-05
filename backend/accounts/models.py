@@ -19,6 +19,11 @@ class Employee(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['role', 'is_active']),
+            models.Index(fields=['department']),
+            models.Index(fields=['created_at']),
+        ]
 
     def __str__(self):
         return f"{self.employee_id} - {self.full_name}"

@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { CheckCircle2, UserPlus } from 'lucide-react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import Navbar from '../../components/common/Navbar';
+import { Field } from '../../components/ui';
+import { buttonClass, inputClass } from '../../components/uiClasses';
 import { registerEmployee } from '../../services/authService';
-import { UserPlus, CheckCircle2 } from 'lucide-react';
 
-const DEPARTMENTS = ['Engineering', 'Marketing', 'Sales', 'HR', 'Finance', 'Operations', 'Design', 'Legal'];
-const DESIGNATIONS = ['Software Engineer', 'Senior Engineer', 'Manager', 'Analyst', 'Designer', 'HR Executive', 'Accountant', 'Intern', 'Team Lead', 'Director'];
+const departments = ['Engineering', 'Marketing', 'Sales', 'HR', 'Finance', 'Operations', 'Design', 'Legal'];
+const designations = ['Software Engineer', 'Senior Engineer', 'Manager', 'Analyst', 'Designer', 'HR Executive', 'Accountant', 'Intern', 'Team Lead', 'Director'];
 
 const initialForm = {
   employee_id: '',
@@ -27,7 +29,7 @@ const RegisterEmployee = () => {
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     setError('');
   };
 
@@ -51,12 +53,11 @@ const RegisterEmployee = () => {
     try {
       await registerEmployee(form);
       setSuccess(true);
-      setTimeout(() => navigate('/admin/employees'), 2000);
+      setTimeout(() => navigate('/admin/employees'), 1500);
     } catch (err) {
       const errData = err.response?.data;
       if (errData && typeof errData === 'object') {
-        const msgs = Object.entries(errData).map(([k, v]) => `${k}: ${Array.isArray(v) ? v[0] : v}`).join('\n');
-        setError(msgs);
+        setError(Object.entries(errData).map(([key, value]) => `${key}: ${Array.isArray(value) ? value[0] : value}`).join('\n'));
       } else {
         setError('Registration failed. Please try again.');
       }
@@ -65,37 +66,15 @@ const RegisterEmployee = () => {
     }
   };
 
-  const FieldLabel = ({ label, required }) => (
-    <label style={{
-      display: 'block',
-      fontSize: '12px', fontWeight: 700,
-      color: '#374151',
-      marginBottom: '7px',
-      textTransform: 'uppercase', letterSpacing: '0.6px',
-    }}>
-      {label} {required && <span style={{ color: '#DC2626' }}>*</span>}
-    </label>
-  );
-
   if (success) {
     return (
       <DashboardLayout>
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          height: '80vh', flexDirection: 'column', gap: '16px',
-          animation: 'fadeIn 0.5s ease',
-        }}>
-          <div style={{
-            width: '88px', height: '88px',
-            background: '#ECFDF5',
-            border: '2px solid #A7F3D0',
-            borderRadius: '50%',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <CheckCircle2 size={44} color="#059669" />
+        <div className="flex h-full flex-col items-center justify-center gap-4 bg-slate-50">
+          <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-emerald-200 bg-emerald-50 text-emerald-600">
+            <CheckCircle2 size={46} />
           </div>
-          <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#0F172A' }}>Employee Registered!</h2>
-          <p style={{ color: '#64748B' }}>Redirecting to employee list...</p>
+          <h2 className="text-2xl font-bold text-slate-950">Employee Registered!</h2>
+          <p className="text-slate-500">Redirecting to employee list...</p>
         </div>
       </DashboardLayout>
     );
@@ -104,134 +83,60 @@ const RegisterEmployee = () => {
   return (
     <DashboardLayout>
       <Navbar title="Register Employee" subtitle="Add a new member to your team" />
-
-      <div style={{ padding: '28px', animation: 'fadeIn 0.4s ease' }}>
-        <div style={{ maxWidth: '740px', margin: '0 auto' }}>
-          {/* Page Header */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '14px',
-            marginBottom: '22px',
-          }}>
-            <div style={{
-              width: '48px', height: '48px',
-              background: '#EBF2FF',
-              borderRadius: '12px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              border: '1px solid rgba(29,110,245,0.2)',
-            }}>
-              <UserPlus size={22} color="#1D6EF5" />
+      <main className="flex-1 overflow-auto bg-slate-50 p-4 md:p-7">
+        <div className="mx-auto max-w-3xl">
+          <div className="mb-5 flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700">
+              <UserPlus size={23} />
             </div>
             <div>
-              <p className="section-title">New Employee Registration</p>
-              <p className="section-subtitle">Fill in all required fields below</p>
+              <h2 className="text-xl font-bold text-slate-950">New Employee Registration</h2>
+              <p className="text-sm text-slate-500">Fill in all required fields below</p>
             </div>
           </div>
 
-          {/* Form Card */}
-          <div style={{
-            background: '#FFFFFF',
-            borderRadius: '16px',
-            border: '1px solid #E2E8F4',
-            boxShadow: '0 4px 16px rgba(29,110,245,0.08)',
-            overflow: 'hidden',
-          }}>
-            {/* Form Header Bar */}
-            <div style={{
-              background: 'linear-gradient(135deg, #1D6EF5 0%, #1045B8 100%)',
-              padding: '18px 28px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-            }}>
-              <UserPlus size={18} color="rgba(255,255,255,0.9)" />
-              <p style={{ fontWeight: 600, fontSize: '14px', color: '#FFFFFF' }}>
-                Employee Information Form
-              </p>
+          <form className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm" onSubmit={handleSubmit}>
+            <div className="flex items-center gap-2 bg-blue-600 px-6 py-4 text-white">
+              <UserPlus size={18} />
+              <p className="text-sm font-semibold">Employee Information Form</p>
             </div>
-
-            <form onSubmit={handleSubmit} style={{ padding: '28px' }}>
-              {/* Row 1 */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px', marginBottom: '18px' }}>
-                <div>
-                  <FieldLabel label="Employee ID" required />
-                  <input id="employee_id" name="employee_id" type="text" placeholder="e.g. EMP001"
-                    value={form.employee_id} onChange={handleChange} required className="form-input" />
-                </div>
-                <div>
-                  <FieldLabel label="Full Name" required />
-                  <input id="full_name" name="full_name" type="text" placeholder="John Doe"
-                    value={form.full_name} onChange={handleChange} required className="form-input" />
-                </div>
-              </div>
-
-              {/* Row 2 */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px', marginBottom: '18px' }}>
-                <div>
-                  <FieldLabel label="Email Address" required />
-                  <input id="email" name="email" type="email" placeholder="john@company.com"
-                    value={form.email} onChange={handleChange} required className="form-input" />
-                </div>
-                <div>
-                  <FieldLabel label="Role" required />
-                  <select id="role" name="role" value={form.role} onChange={handleChange} className="form-input">
+            <div className="space-y-5 p-6">
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="Employee ID"><input className={inputClass} name="employee_id" onChange={handleChange} required value={form.employee_id} /></Field>
+                <Field label="Full Name"><input className={inputClass} name="full_name" onChange={handleChange} required value={form.full_name} /></Field>
+                <Field label="Email Address"><input className={inputClass} name="email" onChange={handleChange} required type="email" value={form.email} /></Field>
+                <Field label="Role">
+                  <select className={inputClass} name="role" onChange={handleChange} value={form.role}>
                     <option value="employee">Employee</option>
                     <option value="admin">Admin</option>
                   </select>
-                </div>
-              </div>
-
-              {/* Row 3 */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px', marginBottom: '18px' }}>
-                <div>
-                  <FieldLabel label="Department" required />
-                  <select id="department" name="department" value={form.department} onChange={handleChange} required className="form-input">
+                </Field>
+                <Field label="Department">
+                  <select className={inputClass} name="department" onChange={handleChange} required value={form.department}>
                     <option value="">Select Department</option>
-                    {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                    {departments.map((item) => <option key={item} value={item}>{item}</option>)}
                   </select>
-                </div>
-                <div>
-                  <FieldLabel label="Designation" required />
-                  <select id="designation" name="designation" value={form.designation} onChange={handleChange} required className="form-input">
+                </Field>
+                <Field label="Designation">
+                  <select className={inputClass} name="designation" onChange={handleChange} required value={form.designation}>
                     <option value="">Select Designation</option>
-                    {DESIGNATIONS.map(d => <option key={d} value={d}>{d}</option>)}
+                    {designations.map((item) => <option key={item} value={item}>{item}</option>)}
                   </select>
-                </div>
+                </Field>
+                <Field label="Password"><input className={inputClass} name="password" onChange={handleChange} required type="password" value={form.password} /></Field>
+                <Field label="Confirm Password"><input className={inputClass} name="confirm_password" onChange={handleChange} required type="password" value={form.confirm_password} /></Field>
               </div>
 
-              {/* Row 4 */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px', marginBottom: '24px' }}>
-                <div>
-                  <FieldLabel label="Password" required />
-                  <input id="password" name="password" type="password" placeholder="Min. 6 characters"
-                    value={form.password} onChange={handleChange} required className="form-input" />
-                </div>
-                <div>
-                  <FieldLabel label="Confirm Password" required />
-                  <input id="confirm_password" name="confirm_password" type="password" placeholder="Re-enter password"
-                    value={form.confirm_password} onChange={handleChange} required className="form-input" />
-                </div>
-              </div>
+              {error && <div className="whitespace-pre-line rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}
 
-              {/* Error */}
-              {error && (
-                <div className="alert alert-error" style={{ marginBottom: '18px', whiteSpace: 'pre-line' }}>
-                  ⚠️ {error}
-                </div>
-              )}
-
-              {/* Buttons */}
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <button type="button" onClick={() => navigate('/admin/employees')} className="btn-outline">
-                  Cancel
-                </button>
-                <button id="register-btn" type="submit" disabled={loading} className="btn-primary" style={{ flex: 1 }}>
-                  {loading ? '⏳ Registering...' : '✓ Register Employee'}
-                </button>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button className={buttonClass.outline} onClick={() => navigate('/admin/employees')} type="button">Cancel</button>
+                <button className={`${buttonClass.admin} flex-1`} disabled={loading} type="submit">{loading ? 'Registering...' : 'Register Employee'}</button>
               </div>
-            </form>
-          </div>
+            </div>
+          </form>
         </div>
-      </div>
+      </main>
     </DashboardLayout>
   );
 };
