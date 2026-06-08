@@ -1,39 +1,79 @@
-import { CalendarDays, CheckSquare, Clock, TimerReset } from 'lucide-react';
-
-const cards = [
-  { key: 'logged_hours', label: "Today's Logged Hours", suffix: 'Hours', icon: Clock, tone: 'bg-sky-100 text-sky-700' },
-  { key: 'remaining_hours', label: 'Remaining Hours', suffix: 'Hours', icon: TimerReset, tone: 'bg-amber-100 text-amber-700' },
-  { key: 'total_tasks', label: 'Total Tasks', suffix: 'Tasks', icon: CheckSquare, tone: 'bg-emerald-100 text-emerald-700' },
-  { key: 'current_date', label: 'Current Date', suffix: '', icon: CalendarDays, tone: 'bg-violet-100 text-violet-700' },
-];
+import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 
 const formatDate = (value) => {
   if (!value) return '-';
-  return new Date(value).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  return new Date(value).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', yyyy: 'numeric' });
 };
 
-const DashboardCards = ({ summary }) => (
-  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-2">
-    {cards.map(({ key, label, suffix, icon: Icon, tone }) => {
-      const value = key === 'current_date' ? formatDate(summary?.[key]) : summary?.[key] ?? 0;
-      return (
-        <div key={key} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{label}</p>
-              <p className="mt-3 text-3xl font-black text-slate-950">
-                {value}
-                {suffix && <span className="ml-1 text-sm font-semibold text-slate-500">{suffix}</span>}
-              </p>
-            </div>
-            <div className={`flex h-12 w-12 items-center justify-center rounded-md ${tone}`}>
-              <Icon size={22} />
-            </div>
+const DashboardCards = ({ summary }) => {
+  const logged    = summary?.logged_hours    ?? 0;
+  const remaining = summary?.remaining_hours ?? 0;
+  const tasks     = summary?.total_tasks     ?? 0;
+  const date      = summary?.current_date
+    ? new Date(summary.current_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })
+    : '-';
+
+  const loggedPct   = Math.round((logged / 8) * 100);
+  const isOnTrack   = remaining === 0;
+
+  const cards = [
+    {
+      label: "Today's Logged Hours",
+      value: `${logged}h`,
+      sub: loggedPct > 0
+        ? { up: true,  text: `${loggedPct}% of daily 8h target` }
+        : { up: null,  text: 'No hours logged yet' },
+    },
+    {
+      label: 'Remaining Hours',
+      value: `${remaining}h`,
+      sub: isOnTrack
+        ? { up: true,  text: 'Daily target complete' }
+        : { up: false, text: `${remaining}h still to log today` },
+    },
+    {
+      label: 'Tasks Logged',
+      value: tasks,
+      sub: tasks > 0
+        ? { up: true,  text: `${tasks} task${tasks !== 1 ? 's' : ''} recorded today` }
+        : { up: null,  text: 'No tasks added yet' },
+    },
+    {
+      label: "Today's Date",
+      value: date,
+      sub: { up: null, text: new Date().toLocaleDateString('en-GB', { weekday: 'long' }) },
+    },
+  ];
+
+  return (
+    <div className="flex divide-x divide-slate-200 rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      {cards.map(({ label, value, sub }) => (
+        <div key={label} className="flex-1 min-w-0 px-4 py-5 sm:px-6">
+          {/* Label */}
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
+            {label}
+          </p>
+
+          {/* Value */}
+          <p className="text-2xl xl:text-3xl font-black text-slate-950 leading-none whitespace-nowrap">
+            {value}
+          </p>
+
+          {/* Sub-note */}
+          <div className="flex items-center gap-1 mt-3">
+            {sub.up === true  && <ArrowUpRight   size={13} className="flex-shrink-0 text-emerald-500" />}
+            {sub.up === false && <ArrowDownRight  size={13} className="flex-shrink-0 text-red-500" />}
+            <span className={`text-xs font-medium truncate ${
+              sub.up === true  ? 'text-emerald-600' :
+              sub.up === false ? 'text-red-500'     : 'text-slate-400'
+            }`}>
+              {sub.text}
+            </span>
           </div>
         </div>
-      );
-    })}
-  </div>
-);
+      ))}
+    </div>
+  );
+};
 
 export default DashboardCards;

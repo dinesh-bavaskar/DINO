@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, ArrowUpRight, Building2, UserCheck, UserPlus, Users } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, ArrowDownRight, UserPlus, Users } from 'lucide-react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import Navbar from '../../components/common/Navbar';
 import Loader from '../../components/common/Loader';
@@ -28,10 +28,35 @@ const Dashboard = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const statCards = [
-    { label: 'Total Employees', value: stats.total_employees, icon: Users, tone: 'bg-blue-50 text-blue-700' },
-    { label: 'Active', value: stats.active_employees, icon: UserCheck, tone: 'bg-emerald-50 text-emerald-700' },
-    { label: 'Departments', value: stats.departments, icon: Building2, tone: 'bg-violet-50 text-violet-700' },
+  const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+  const dayStr = new Date().toLocaleDateString('en-GB', { weekday: 'long' });
+  const activePct = stats.total_employees > 0
+    ? Math.round((stats.active_employees / stats.total_employees) * 100)
+    : 0;
+
+  const cards = [
+    {
+      label: 'Total Employees',
+      value: stats.total_employees,
+      sub: { up: null, text: 'Total registered staff' },
+    },
+    {
+      label: 'Active Employees',
+      value: stats.active_employees,
+      sub: activePct > 0 
+        ? { up: true, text: `${activePct}% active now` }
+        : { up: null, text: 'No active staff' },
+    },
+    {
+      label: 'Departments',
+      value: stats.departments,
+      sub: { up: null, text: 'Organizational sectors' },
+    },
+    {
+      label: "Today's Date",
+      value: dateStr,
+      sub: { up: null, text: dayStr },
+    },
   ];
 
   return (
@@ -40,17 +65,24 @@ const Dashboard = () => {
       <main className="flex-1 overflow-auto bg-slate-50 p-4 md:p-7">
         {loading ? <Loader /> : (
           <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-3">
-              {statCards.map(({ label, value, icon: Icon, tone }) => (
-                <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md" key={label}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{label}</p>
-                      <p className="mt-3 text-4xl font-black text-slate-950">{value}</p>
-                    </div>
-                    <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${tone}`}>
-                      <Icon size={23} />
-                    </div>
+            <div className="flex divide-x divide-slate-200 rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+              {cards.map(({ label, value, sub }) => (
+                <div key={label} className="flex-1 min-w-0 px-4 py-5 sm:px-6">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
+                    {label}
+                  </p>
+                  <p className="text-2xl xl:text-3xl font-black text-slate-950 leading-none whitespace-nowrap">
+                    {value}
+                  </p>
+                  <div className="flex items-center gap-1 mt-3">
+                    {sub.up === true  && <ArrowUpRight   size={13} className="flex-shrink-0 text-emerald-500" />}
+                    {sub.up === false && <ArrowDownRight  size={13} className="flex-shrink-0 text-red-500" />}
+                    <span className={`text-xs font-medium truncate ${
+                      sub.up === true  ? 'text-emerald-600' :
+                      sub.up === false ? 'text-red-500'     : 'text-slate-400'
+                    }`}>
+                      {sub.text}
+                    </span>
                   </div>
                 </div>
               ))}
