@@ -24,6 +24,7 @@ const Login = () => {
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -44,13 +45,25 @@ const Login = () => {
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     setError('');
+    setNotice('');
   };
 
   const handleModeChange = (nextMode) => {
     setMode(nextMode);
     setForm(emptyForm);
     setError('');
+    setNotice('');
     setShowPassword(false);
+  };
+
+  const handleForgotPassword = () => {
+    setError('');
+    const identifier = mode === 'admin' ? form.username.trim() : form.employee_id.trim();
+    if (!identifier) {
+      setNotice(`Enter your ${mode === 'admin' ? 'admin username' : 'employee ID'} first, then contact the administrator to reset your password.`);
+      return;
+    }
+    setNotice(`Password reset request noted for ${identifier}. Please contact the administrator to issue a new password.`);
   };
 
   const handleSubmit = async (e) => {
@@ -263,7 +276,7 @@ const Login = () => {
                   display: 'flex',
                 }}
               >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
               </button>
             </div>
           </div>
@@ -280,6 +293,7 @@ const Login = () => {
               Remember me
             </label>
             <button
+              onClick={handleForgotPassword}
               type="button"
               style={{
                 background: 'none',
@@ -294,6 +308,23 @@ const Login = () => {
               Forgot Password?
             </button>
           </div>
+
+          {/* Notice */}
+          {notice && (
+            <div
+              style={{
+                background: '#eff6ff',
+                border: '1.5px solid #bfdbfe',
+                borderRadius: '9px',
+                padding: '11px 14px',
+                fontSize: '13px',
+                color: '#1d4ed8',
+                fontWeight: '500',
+              }}
+            >
+              {notice}
+            </div>
+          )}
 
           {/* Error */}
           {error && (

@@ -5,7 +5,7 @@ from django.db.models import Sum
 from django.utils import timezone
 from rest_framework import serializers
 
-from .models import Project, Timesheet
+from .models import Milestone, Project, Timesheet
 
 
 DAILY_HOUR_LIMIT = Decimal('8.00')
@@ -19,6 +19,29 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     def validate_name(self, value):
         return value.strip()
+
+
+class MilestoneSerializer(serializers.ModelSerializer):
+    project_name = serializers.CharField(source='project.name', read_only=True)
+
+    class Meta:
+        model = Milestone
+        fields = ['id', 'project', 'project_name', 'name', 'is_active', 'created_at']
+        read_only_fields = ['id', 'project_name', 'created_at']
+
+    def validate_name(self, value):
+        return value.strip()
+
+    def validate(self, attrs):
+        project = attrs.get('project')
+        name = attrs.get('name', '').strip()
+        instance = self.instance
+        qs = Milestone.objects.filter(project=project, name__iexact=name)
+        if instance:
+            qs = qs.exclude(pk=instance.pk)
+        if qs.exists():
+            raise serializers.ValidationError({'name': 'A milestone with this name already exists for the selected project.'})
+        return attrs
 
 
 def calculate_hours(start, end):

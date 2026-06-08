@@ -9,9 +9,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.models import Employee
-from .models import Project, Timesheet
+from .models import Milestone, Project, Timesheet
 from .serializers import (
     DAILY_HOUR_LIMIT,
+    MilestoneSerializer,
     ProjectSerializer,
     TimesheetReviewSerializer,
     TimesheetSerializer,
@@ -112,6 +113,52 @@ class AdminProjectDetailView(AdminOnlyMixin, APIView):
         except Project.DoesNotExist:
             return Response({'detail': 'Project not found.'}, status=status.HTTP_404_NOT_FOUND)
         project.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ActiveMilestoneListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        project_id = request.query_params.get('project_id')
+        milestones = Milestone.objects.filter(is_active=True).select_related('project')
+        if project_id:
+            milestones = milestones.filter(project_id=project_id)
+        return Response(MilestoneSerializer(milestones, many=True).data)
+
+
+class AdminMilestoneListCreateView(AdminOnlyMixin, APIView):
+    def get(self, request):
+        error = self.get_admin_error(request)
+        if error:
+            return error
+        project_id = request.query_params.get('project_id')
+        milestones = Milestone.objects.all().select_related('project')
+        if project_id:
+            milestones = milestones.filter(project_id=project_id)
+        return Response(MilestoneSerializer(milestones, many=True).data)
+
+    def post(self, request):
+        error = self.get_admin_error(request)
+        if error:
+            return error
+        serializer = MilestoneSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AdminMilestoneDetailView(AdminOnlyMixin, APIView):
+    def delete(self, request, pk):
+        error = self.get_admin_error(request)
+        if error:
+            return error
+        try:
+            milestone = Milestone.objects.get(pk=pk)
+        except Milestone.DoesNotExist:
+            return Response({'detail': 'Milestone not found.'}, status=status.HTTP_404_NOT_FOUND)
+        milestone.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

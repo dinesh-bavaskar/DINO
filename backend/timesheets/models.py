@@ -20,6 +20,23 @@ class Project(models.Model):
         return self.name
 
 
+class Milestone(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='milestones')
+    name = models.CharField(max_length=120)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['project__name', 'name']
+        unique_together = ('project', 'name')
+        indexes = [
+            models.Index(fields=['project', 'is_active']),
+        ]
+
+    def __str__(self):
+        return f'{self.project.name} → {self.name}'
+
+
 class Timesheet(models.Model):
     STATUS_DRAFT = 'draft'
     STATUS_SUBMITTED = 'submitted'

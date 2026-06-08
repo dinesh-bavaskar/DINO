@@ -9,11 +9,11 @@ import {
   createTimesheet,
   getDashboardSummary,
   getProjects,
+  getMilestonesByProject,
   getTodayTimesheets,
   setTimesheetSubmissionStatus,
 } from '../../services/timesheetService';
 
-const milestoneOptions = ['Planning', 'Development', 'Testing', 'Review', 'Release'];
 
 const emptyRow = () => ({
   id: crypto.randomUUID(),
@@ -50,6 +50,7 @@ const TimesheetPage = () => {
   const [rows, setRows] = useState([emptyRow()]);
   const [entries, setEntries] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [milestonesCache, setMilestonesCache] = useState({}); // projectId → milestone[]
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -87,12 +88,28 @@ const TimesheetPage = () => {
     loadData();
   }, []);
 
+  const fetchMilestonesForProject = (projectId) => {
+    if (!projectId || milestonesCache[projectId] !== undefined) return;
+    getMilestonesByProject(projectId)
+      .then((res) => setMilestonesCache((prev) => ({ ...prev, [projectId]: res.data })))
+      .catch(() => setMilestonesCache((prev) => ({ ...prev, [projectId]: [] })));
+  };
+
   const updateRow = (rowId, name, value) => {
     setError('');
     setMessage('');
-    setRows((current) => current.map((row) => (
-      row.id === rowId ? { ...row, [name]: value } : row
-    )));
+    setRows((current) => current.map((row) => {
+      if (row.id !== rowId) return row;
+      const updated = { ...row, [name]: value };
+      // Reset milestone when project changes
+      if (name === 'project_name') {
+        updated.milestone_name = '';
+        // Find project id from projects list to fetch milestones
+        const project = projects.find((p) => p.name === value);
+        if (project) fetchMilestonesForProject(project.id);
+      }
+      return updated;
+    }));
   };
 
   const addTask = () => setRows((current) => [...current, emptyRow()]);
@@ -216,10 +233,21 @@ const TimesheetPage = () => {
                           </select>
                         </td>
                         <td className="border border-slate-300 p-1.5">
-                          <select className={tableInputClass} value={row.milestone_name} onChange={(event) => updateRow(row.id, 'milestone_name', event.target.value)}>
-                            <option value="">Select Milestone</option>
-                            {milestoneOptions.map((milestone) => <option key={milestone} value={milestone}>{milestone}</option>)}
-                          </select>
+                          {(() => {
+                            const project = projects.find((p) => p.name === row.project_name);
+                            const milestoneList = project ? (milestonesCache[project.id] || []) : [];
+                            return (
+                              <select
+                                className={tableInputClass}
+                                disabled={!row.project_name}
+                                value={row.milestone_name}
+                                onChange={(event) => updateRow(row.id, 'milestone_name', event.target.value)}
+                              >
+                                <option value="">{row.project_name ? 'Select Milestone' : 'Select Project first'}</option>
+                                {milestoneList.map((m) => <option key={m.id} value={m.name}>{m.name}</option>)}
+                              </select>
+                            );
+                          })()}
                         </td>
                         <td className="border border-slate-300 p-1.5">
                           <input className={tableInputClass} placeholder="Task Description" value={row.task_name} onChange={(event) => updateRow(row.id, 'task_name', event.target.value)} />

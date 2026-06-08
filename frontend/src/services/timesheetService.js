@@ -24,3 +24,7 @@ export const getProjects = () => API.get('/projects/');
 export const getAdminProjects = () => API.get('/admin/projects/');
 export const createProject = (data) => API.post('/admin/projects/', data);
 export const deleteProject = (id) => API.delete(`/admin/projects/${id}/`);
+export const getMilestonesByProject = (projectId) => API.get('/milestones/', { params: { project_id: projectId } });
+export const getAdminMilestones = (params = {}) => API.get('/admin/milestones/', { params });
+export const createMilestone = (data) => API.post('/admin/milestones/', data);
+export const deleteMilestone = (id) => API.delete(`/admin/milestones/${id}/`);
