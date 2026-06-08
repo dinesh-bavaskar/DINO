@@ -14,6 +14,7 @@ from .serializers import (
     RegisterEmployeeSerializer,
     AdminLoginSerializer,
     EmployeeLoginSerializer,
+    UpdateEmployeeSerializer,
 )
 
 
@@ -232,3 +233,44 @@ class EmployeeStatsView(APIView):
             'active_employees': active_employees,
             'departments': departments,
         })
+
+
+class EmployeeDetailView(APIView):
+    """Admin only: Retrieve or update employee details."""
+    permission_classes = [IsAuthenticated]
+
+    def get_employee(self, pk):
+        try:
+            return Employee.objects.get(pk=pk, role='employee')
+        except Employee.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        # Check admin role
+        is_superuser = request.user.is_superuser
+        has_admin_role = hasattr(request.auth, 'get') and request.auth.get('role') == 'admin'
+        if not (is_superuser or has_admin_role):
+            return Response({'detail': 'Admin access required.'}, status=status.HTTP_403_FORBIDDEN)
+
+        employee = self.get_employee(pk)
+        if not employee:
+            return Response({'detail': 'Employee not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(EmployeeSerializer(employee).data)
+
+    def put(self, request, pk):
+        # Check admin role
+        is_superuser = request.user.is_superuser
+        has_admin_role = hasattr(request.auth, 'get') and request.auth.get('role') == 'admin'
+        if not (is_superuser or has_admin_role):
+            return Response({'detail': 'Admin access required.'}, status=status.HTTP_403_FORBIDDEN)
+
+        employee = self.get_employee(pk)
+        if not employee:
+            return Response({'detail': 'Employee not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UpdateEmployeeSerializer(employee, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(EmployeeSerializer(employee).data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

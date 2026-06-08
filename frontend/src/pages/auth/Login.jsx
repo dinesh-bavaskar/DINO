@@ -102,7 +102,7 @@ const Login = () => {
       <div
         style={{
           background: '#fff',
-          borderRadius: '10px',
+          borderRadius: '6px',
           boxShadow: '0 8px 40px rgba(30,60,120,0.10)',
           padding: '44px 40px 36px',
           width: '100%',
@@ -115,7 +115,7 @@ const Login = () => {
             <div
               style={{
                 background: '#eff4ff',
-                borderRadius: '8px',
+                borderRadius: '6px',
                 width: '34px',
                 height: '34px',
                 display: 'flex',
@@ -143,7 +143,7 @@ const Login = () => {
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
             background: '#f1f5f9',
-            borderRadius: '10px',
+            borderRadius: '6px',
             padding: '4px',
             marginBottom: '24px',
             gap: '4px',
@@ -158,7 +158,7 @@ const Login = () => {
               onClick={() => handleModeChange(item.key)}
               type="button"
               style={{
-                borderRadius: '7px',
+                borderRadius: '6px',
                 padding: '9px 0',
                 fontSize: '13.5px',
                 fontWeight: '700',
@@ -208,7 +208,7 @@ const Login = () => {
                   width: '100%',
                   boxSizing: 'border-box',
                   border: '1.5px solid #e2e8f0',
-                  borderRadius: '10px',
+                  borderRadius: '6px',
                   padding: '11px 14px 11px 38px',
                   fontSize: '14px',
                   color: '#0f172a',
@@ -249,7 +249,7 @@ const Login = () => {
                   width: '100%',
                   boxSizing: 'border-box',
                   border: '1.5px solid #e2e8f0',
-                  borderRadius: '10px',
+                  borderRadius: '6px',
                   padding: '11px 40px 11px 38px',
                   fontSize: '14px',
                   color: '#0f172a',
@@ -315,7 +315,7 @@ const Login = () => {
               style={{
                 background: '#eff6ff',
                 border: '1.5px solid #bfdbfe',
-                borderRadius: '9px',
+                borderRadius: '6px',
                 padding: '11px 14px',
                 fontSize: '13px',
                 color: '#1d4ed8',
@@ -332,7 +332,7 @@ const Login = () => {
               style={{
                 background: '#fef2f2',
                 border: '1.5px solid #fecaca',
-                borderRadius: '9px',
+                borderRadius: '6px',
                 padding: '11px 14px',
                 fontSize: '13px',
                 color: '#dc2626',
@@ -352,7 +352,7 @@ const Login = () => {
               background: loading ? '#93c5fd' : '#2563eb',
               color: '#fff',
               border: 'none',
-              borderRadius: '10px',
+              borderRadius: '6px',
               padding: '13px',
               fontSize: '15px',
               fontWeight: '700',

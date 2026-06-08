@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, ArrowUpRight, ArrowDownRight, UserPlus, Users } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, UserPlus, Users } from 'lucide-react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import Navbar from '../../components/common/Navbar';
 import Loader from '../../components/common/Loader';
@@ -28,7 +28,7 @@ const Dashboard = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+  const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   const dayStr = new Date().toLocaleDateString('en-GB', { weekday: 'long' });
   const activePct = stats.total_employees > 0
     ? Math.round((stats.active_employees / stats.total_employees) * 100)
@@ -66,40 +66,33 @@ const Dashboard = () => {
         {loading ? <Loader /> : (
           <div className="space-y-6">
             <div className="flex divide-x divide-slate-200 rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-              {cards.map(({ label, value, sub }) => (
+              {cards.map(({ label, value }) => (
                 <div key={label} className="flex-1 min-w-0 px-4 py-5 sm:px-6">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
                     {label}
                   </p>
-                  <p className="text-2xl xl:text-3xl font-black text-slate-950 leading-none whitespace-nowrap">
+                  <p className={`font-black text-slate-950 leading-none whitespace-nowrap ${
+                    String(value).length > 5 
+                      ? 'text-lg sm:text-xl xl:text-2xl' 
+                      : 'text-2xl xl:text-3xl'
+                  }`}>
                     {value}
                   </p>
-                  <div className="flex items-center gap-1 mt-3">
-                    {sub.up === true  && <ArrowUpRight   size={13} className="flex-shrink-0 text-emerald-500" />}
-                    {sub.up === false && <ArrowDownRight  size={13} className="flex-shrink-0 text-red-500" />}
-                    <span className={`text-xs font-medium truncate ${
-                      sub.up === true  ? 'text-emerald-600' :
-                      sub.up === false ? 'text-red-500'     : 'text-slate-400'
-                    }`}>
-                      {sub.text}
-                    </span>
-                  </div>
                 </div>
               ))}
             </div>
 
             <div className="grid gap-4 lg:grid-cols-2">
               {[
-                { path: '/admin/register', icon: UserPlus, label: 'Register New Employee', desc: 'Add a team member to the system', tone: 'bg-blue-50 text-blue-700' },
-                { path: '/admin/employees', icon: Users, label: 'View All Employees', desc: 'Browse and manage your team', tone: 'bg-violet-50 text-violet-700' },
-              ].map(({ path, icon: Icon, label, desc, tone }) => (
+                { path: '/admin/register', icon: UserPlus, label: 'Register New Employee', tone: 'bg-blue-50 text-blue-700' },
+                { path: '/admin/employees', icon: Users, label: 'View All Employees', tone: 'bg-violet-50 text-violet-700' },
+              ].map(({ path, icon: Icon, label, tone }) => (
                 <button className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-blue-200 hover:shadow-md" key={path} onClick={() => navigate(path)} type="button">
                   <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${tone}`}>
                     <Icon size={22} />
                   </div>
                   <div className="flex-1">
                     <p className="font-bold text-slate-950">{label}</p>
-                    <p className="mt-1 text-sm text-slate-400">{desc}</p>
                   </div>
                   <ArrowRight className="text-slate-300" size={18} />
                 </button>
@@ -110,7 +103,6 @@ const Dashboard = () => {
               <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
                 <div>
                   <h2 className="font-bold text-slate-950">Recent Employees</h2>
-                  <p className="text-sm text-slate-400">Last {recentEmployees.length} added</p>
                 </div>
                 <button className={buttonClass.outline} onClick={() => navigate('/admin/employees')} type="button">
                   View all <ArrowUpRight size={15} />

@@ -9,8 +9,8 @@ export const buttonClass = {
 export const inputClass = 'w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-100';
 export const labelClass = 'mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600';
 export const cardClass = 'rounded-lg border border-slate-200 bg-white shadow-sm';
-export const thClass = 'px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500';
-export const tdClass = 'px-4 py-3 text-sm text-slate-700';
+export const thClass = 'px-2.5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500';
+export const tdClass = 'px-2.5 py-3 text-sm text-slate-700';
 export const statusTone = {
   draft: 'slate',
   submitted: 'blue',

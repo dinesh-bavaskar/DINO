@@ -26,6 +26,8 @@ const RegisterEmployee = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [isCustomDept, setIsCustomDept] = useState(false);
+  const [isCustomDesig, setIsCustomDesig] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -91,7 +93,6 @@ const RegisterEmployee = () => {
             </div>
             <div>
               <h2 className="text-xl font-bold text-slate-950">New Employee Registration</h2>
-              <p className="text-sm text-slate-500">Fill in all required fields below</p>
             </div>
           </div>
 
@@ -111,18 +112,105 @@ const RegisterEmployee = () => {
                     <option value="admin">Admin</option>
                   </select>
                 </Field>
-                <Field label="Department">
-                  <select className={inputClass} name="department" onChange={handleChange} required value={form.department}>
-                    <option value="">Select Department</option>
-                    {departments.map((item) => <option key={item} value={item}>{item}</option>)}
-                  </select>
-                </Field>
-                <Field label="Designation">
-                  <select className={inputClass} name="designation" onChange={handleChange} required value={form.designation}>
-                    <option value="">Select Designation</option>
-                    {designations.map((item) => <option key={item} value={item}>{item}</option>)}
-                  </select>
-                </Field>
+                {!isCustomDept ? (
+                  <Field label="Department">
+                    <select
+                      className={inputClass}
+                      name="department"
+                      onChange={(e) => {
+                        if (e.target.value === 'CUSTOM') {
+                          setIsCustomDept(true);
+                          setForm((prev) => ({ ...prev, department: '' }));
+                        } else {
+                          handleChange(e);
+                        }
+                      }}
+                      required
+                      value={form.department}
+                    >
+                      <option value="">Select Department</option>
+                      {departments.map((item) => (
+                        <option key={item} value={item}>
+                          {item}
+                        </option>
+                      ))}
+                      <option value="CUSTOM">+ Add Custom Department</option>
+                    </select>
+                  </Field>
+                ) : (
+                  <Field label="Custom Department">
+                    <div className="flex gap-2">
+                      <input
+                        className={`${inputClass} flex-1`}
+                        name="department"
+                        onChange={handleChange}
+                        placeholder="Enter department name"
+                        required
+                        value={form.department}
+                      />
+                      <button
+                        className="text-xs text-blue-600 hover:text-blue-800 self-center whitespace-nowrap"
+                        onClick={() => {
+                          setIsCustomDept(false);
+                          setForm((prev) => ({ ...prev, department: '' }));
+                        }}
+                        type="button"
+                      >
+                        Select from list
+                      </button>
+                    </div>
+                  </Field>
+                )}
+
+                {!isCustomDesig ? (
+                  <Field label="Designation">
+                    <select
+                      className={inputClass}
+                      name="designation"
+                      onChange={(e) => {
+                        if (e.target.value === 'CUSTOM') {
+                          setIsCustomDesig(true);
+                          setForm((prev) => ({ ...prev, designation: '' }));
+                        } else {
+                          handleChange(e);
+                        }
+                      }}
+                      required
+                      value={form.designation}
+                    >
+                      <option value="">Select Designation</option>
+                      {designations.map((item) => (
+                        <option key={item} value={item}>
+                          {item}
+                        </option>
+                      ))}
+                      <option value="CUSTOM">+ Add Custom Designation</option>
+                    </select>
+                  </Field>
+                ) : (
+                  <Field label="Custom Designation">
+                    <div className="flex gap-2">
+                      <input
+                        className={`${inputClass} flex-1`}
+                        name="designation"
+                        onChange={handleChange}
+                        placeholder="Enter designation name"
+                        required
+                        value={form.designation}
+                      />
+                      <button
+                        className="text-xs text-blue-600 hover:text-blue-800 self-center whitespace-nowrap"
+                        onClick={() => {
+                          setIsCustomDesig(false);
+                          setForm((prev) => ({ ...prev, designation: '' }));
+                        }}
+                        type="button"
+                      >
+                        Select from list
+                      </button>
+                    </div>
+                  </Field>
+                )}
                 <Field label="Password"><input className={inputClass} name="password" onChange={handleChange} required type="password" value={form.password} /></Field>
                 <Field label="Confirm Password"><input className={inputClass} name="confirm_password" onChange={handleChange} required type="password" value={form.confirm_password} /></Field>
               </div>

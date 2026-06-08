@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Trash2, Flag } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import Navbar from '../../components/common/Navbar';
 import Loader from '../../components/common/Loader';
@@ -113,25 +113,24 @@ const Settings = () => {
     <DashboardLayout>
       <Navbar title="Settings" subtitle="Manage projects and milestones" />
       <main className="flex-1 overflow-auto bg-slate-50 p-4 md:p-7">
-        <div className="mx-auto max-w-3xl space-y-8">
+        <div className="mx-auto max-w-6xl grid gap-6 md:grid-cols-2 items-start">
 
           {/* ── Project Settings ───────────────────────────────── */}
           <div className="space-y-4">
             <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
               <div className="mb-4">
                 <h1 className="text-xl font-bold text-slate-950">Project Settings</h1>
-                <p className="mt-1 text-sm text-slate-500">These project names appear in the employee Timesheet dropdown.</p>
               </div>
 
               <form className="flex flex-col gap-3 sm:flex-row" onSubmit={addProject}>
                 <input
-                  className={inputClass}
+                  className={`${inputClass} sm:max-w-xs`}
                   id="project-name-input"
                   onChange={(e) => setProjectName(e.target.value)}
                   placeholder="Project name"
                   value={projectName}
                 />
-                <button className={buttonClass.primary} disabled={savingProject} type="submit" id="add-project-btn">
+                <button className={`${buttonClass.primary} whitespace-nowrap shrink-0`} disabled={savingProject} type="submit" id="add-project-btn">
                   <Plus size={16} /> {savingProject ? 'Adding...' : 'Add Project'}
                 </button>
               </form>
@@ -175,19 +174,13 @@ const Settings = () => {
           {/* ── Milestone Settings ─────────────────────────────── */}
           <div className="space-y-4">
             <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="mb-4 flex items-start gap-3">
-                <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md bg-indigo-50 text-indigo-600">
-                  <Flag size={16} />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-slate-950">Milestone Settings</h2>
-                  <p className="mt-1 text-sm text-slate-500">Milestones are linked to a project and appear in the Timesheet form when that project is selected.</p>
-                </div>
+              <div className="mb-4">
+                <h2 className="text-xl font-bold text-slate-950">Milestone Settings</h2>
               </div>
 
               <form className="flex flex-col gap-3 sm:flex-row" onSubmit={addMilestone}>
                 <select
-                  className={inputClass}
+                  className={`${inputClass} sm:w-44`}
                   id="milestone-project-select"
                   onChange={(e) => setMilestoneProject(e.target.value)}
                   value={milestoneProject}
@@ -198,14 +191,14 @@ const Settings = () => {
                   ))}
                 </select>
                 <input
-                  className={inputClass}
+                  className={`${inputClass} sm:max-w-xs`}
                   id="milestone-name-input"
                   onChange={(e) => setMilestoneName(e.target.value)}
                   placeholder="Milestone name"
                   value={milestoneName}
                 />
                 <button
-                  className={buttonClass.primary}
+                  className={`${buttonClass.primary} whitespace-nowrap shrink-0`}
                   disabled={savingMilestone || !milestoneProject}
                   id="add-milestone-btn"
                   type="submit"

@@ -16,6 +16,7 @@ export const getProfile = () => API.get('/profile/');
 export const getEmployees = (params = {}) => API.get('/employees/', { params: { page_size: 10, ...params } }).then(normalizeList);
 export const registerEmployee = (data) => API.post('/employees/register/', data);
 export const updateEmployeeStatus = (id, is_active) => API.patch(`/employees/${id}/status/`, { is_active });
+export const updateEmployee = (id, data) => API.put(`/employees/${id}/`, data);
 export const getStats = () => API.get('/employees/stats/');
 
 export const logout = () => {

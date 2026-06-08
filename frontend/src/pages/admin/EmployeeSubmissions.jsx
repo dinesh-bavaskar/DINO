@@ -7,7 +7,7 @@ import { Badge } from '../../components/ui';
 import { buttonClass, inputClass, tdClass, thClass } from '../../components/uiClasses';
 import { getAdminTimesheets } from '../../services/timesheetService';
 
-const initialFilters = { employee: '', date: '', project: '', status: '' };
+const initialFilters = { employee: '', date: '', project: '' };
 
 const DetailRow = ({ label, value }) => (
   <div>
@@ -15,6 +15,23 @@ const DetailRow = ({ label, value }) => (
     <p className="mt-1 text-sm font-semibold text-slate-800">{value || '-'}</p>
   </div>
 );
+
+const formatTimeAMPM = (timeStr) => {
+  if (!timeStr) return '—';
+  if (timeStr.toLowerCase().includes('am') || timeStr.toLowerCase().includes('pm')) {
+    return timeStr;
+  }
+  const parts = timeStr.split(':');
+  if (parts.length < 2) return timeStr;
+  let hours = parseInt(parts[0], 10);
+  const minutes = parseInt(parts[1], 10);
+  if (isNaN(hours) || isNaN(minutes)) return timeStr;
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const minStr = String(minutes).padStart(2, '0');
+  return `${hours}:${minStr} ${ampm}`;
+};
 
 const EmployeeSubmissions = () => {
   const [filters, setFilters] = useState(initialFilters);
@@ -60,20 +77,13 @@ const EmployeeSubmissions = () => {
       <main className="flex-1 overflow-auto bg-slate-50 p-4 md:p-7">
         <div className="space-y-5">
             <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="grid gap-3 lg:grid-cols-[1.2fr_auto_1fr_auto]">
+            <div className="grid gap-3 sm:grid-cols-3">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                 <input className={`${inputClass} pl-9`} placeholder="Filter by employee name, email, or ID" value={filters.employee} onChange={(e) => updateFilter('employee', e.target.value)} />
               </div>
               <input className={inputClass} type="date" value={filters.date} onChange={(e) => updateFilter('date', e.target.value)} />
               <input className={inputClass} placeholder="Project" value={filters.project} onChange={(e) => updateFilter('project', e.target.value)} />
-              <select className={inputClass} value={filters.status} onChange={(e) => updateFilter('status', e.target.value)}>
-                <option value="">All Status</option>
-                <option value="draft">Draft</option>
-                <option value="submitted">Submitted</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-              </select>
             </div>
           </section>
 
@@ -83,7 +93,7 @@ const EmployeeSubmissions = () => {
                 <table className="min-w-full">
                   <thead className="bg-slate-50">
                     <tr>
-                      {['Employee', 'Project', 'Task', 'Date', 'Hours', 'Status', 'Action'].map((header) => (
+                      {['Employee', 'Project', 'Task', 'Date', 'Hours', 'Action'].map((header) => (
                         <th className={thClass} key={header}>{header}</th>
                       ))}
                     </tr>
@@ -136,8 +146,8 @@ const EmployeeSubmissions = () => {
                 <DetailRow label="Milestone" value={selected.milestone_name} />
                 <DetailRow label="Task Name" value={selected.task_name} />
                 <DetailRow label="Task Type" value={<Badge>{selected.task_type}</Badge>} />
-                <DetailRow label="Planned Time" value={`${selected.planned_start} - ${selected.planned_end}`} />
-                <DetailRow label="Actual Time" value={`${selected.actual_start} - ${selected.actual_end}`} />
+                <DetailRow label="Planned Time" value={`${formatTimeAMPM(selected.planned_start)} - ${formatTimeAMPM(selected.planned_end)}`} />
+                <DetailRow label="Actual Time" value={`${formatTimeAMPM(selected.actual_start)} - ${formatTimeAMPM(selected.actual_end)}`} />
                 <DetailRow label="Total Hours" value={`${selected.actual_hours} hours`} />
                 <DetailRow label="Submission Date" value={selected.submitted_at || selected.created_at} />
                 <DetailRow label="Date" value={selected.date} />

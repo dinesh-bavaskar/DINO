@@ -39,7 +39,6 @@ const EmployeeDashboard = () => {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-lg font-bold text-slate-950">Today's Timesheet</h2>
-                <p className="text-sm text-slate-500">Latest entries for the current day.</p>
               </div>
               <div className="flex gap-2">
                 <Link className={buttonClass.primary} to="/employee/timesheet"><Table2 size={16} /> Open Timesheet</Link>

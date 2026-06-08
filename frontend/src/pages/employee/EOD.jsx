@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import Navbar from '../../components/common/Navbar';
 import Loader from '../../components/common/Loader';
-import { StatusBadge } from '../../components/ui';
+import { StatusBadge, TimePicker } from '../../components/ui';
 import {
   getDashboardSummary,
   getTodayTimesheets,
@@ -154,8 +154,7 @@ const EODPage = () => {
                   <Sunset size={17} />
                 </div>
                 <div>
-                  <h1 className="text-base font-bold text-slate-950 leading-none">Log Actual Hours</h1>
-                  <p className="text-xs text-slate-500 mt-0.5">Update actual times for each task and submit.</p>
+                  <h1 className="text-base font-bold text-slate-950">Log Actual Hours</h1>
                 </div>
               </div>
               <div className="flex items-center gap-1.5 rounded-lg bg-orange-50 border border-orange-200 px-3 py-1.5 text-xs font-semibold text-orange-700">
@@ -228,24 +227,10 @@ const EODPage = () => {
                                 </div>
                               </td>
                               <td className="py-4 px-4 align-middle">
-                                <div className="relative rounded-lg border border-slate-200 bg-white shadow-sm focus-within:ring-2 focus-within:ring-orange-100 focus-within:border-orange-500 transition duration-150 ease-in-out">
-                                  <input 
-                                    type="time" 
-                                    value={row.actual_start} 
-                                    onChange={(e) => updateRow(row.id, 'actual_start', e.target.value)} 
-                                    className="w-full bg-transparent px-3 py-1.5 text-sm outline-none text-slate-800"
-                                  />
-                                </div>
+                                <TimePicker className="w-full justify-between" value={row.actual_start} onChange={(val) => updateRow(row.id, 'actual_start', val)} />
                               </td>
                               <td className="py-4 px-4 align-middle">
-                                <div className="relative rounded-lg border border-slate-200 bg-white shadow-sm focus-within:ring-2 focus-within:ring-orange-100 focus-within:border-orange-500 transition duration-150 ease-in-out">
-                                  <input 
-                                    type="time" 
-                                    value={row.actual_end} 
-                                    onChange={(e) => updateRow(row.id, 'actual_end', e.target.value)} 
-                                    className="w-full bg-transparent px-3 py-1.5 text-sm outline-none text-slate-800"
-                                  />
-                                </div>
+                                <TimePicker className="w-full justify-between" value={row.actual_end} onChange={(val) => updateRow(row.id, 'actual_end', val)} />
                               </td>
                               <td className="py-4 px-4 text-center align-middle">
                                 <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold ${
@@ -330,25 +315,11 @@ const EODPage = () => {
                         <div className="grid grid-cols-2 gap-3.5">
                           <div>
                             <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Actual Start</label>
-                            <div className="relative rounded-lg border border-slate-200 bg-white shadow-sm focus-within:ring-2 focus-within:ring-orange-100 focus-within:border-orange-500 transition duration-150 ease-in-out">
-                              <input 
-                                type="time" 
-                                value={row.actual_start} 
-                                onChange={(e) => updateRow(row.id, 'actual_start', e.target.value)} 
-                                className="w-full bg-transparent px-3 py-1.5 text-sm outline-none text-slate-800"
-                              />
-                            </div>
+                            <TimePicker className="w-full justify-between" value={row.actual_start} onChange={(val) => updateRow(row.id, 'actual_start', val)} />
                           </div>
                           <div>
                             <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Actual End</label>
-                            <div className="relative rounded-lg border border-slate-200 bg-white shadow-sm focus-within:ring-2 focus-within:ring-orange-100 focus-within:border-orange-500 transition duration-150 ease-in-out">
-                              <input 
-                                type="time" 
-                                value={row.actual_end} 
-                                onChange={(e) => updateRow(row.id, 'actual_end', e.target.value)} 
-                                className="w-full bg-transparent px-3 py-1.5 text-sm outline-none text-slate-800"
-                              />
-                            </div>
+                            <TimePicker className="w-full justify-between" value={row.actual_end} onChange={(val) => updateRow(row.id, 'actual_end', val)} />
                           </div>
                         </div>
 
