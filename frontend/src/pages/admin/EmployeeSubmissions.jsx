@@ -4,7 +4,7 @@ import DashboardLayout from '../../layouts/DashboardLayout';
 import Navbar from '../../components/common/Navbar';
 import Loader from '../../components/common/Loader';
 import { buttonClass, inputClass, tdClass, thClass } from '../../components/uiClasses';
-import { getAdminTimesheets, getProjects } from '../../services/timesheetService';
+import { getAdminTimesheetDetail, getAdminTimesheets, getProjects } from '../../services/timesheetService';
 
 const initialFilters = { employee: '', date: '', dateTo: '', projectId: '' };
 
@@ -31,6 +31,8 @@ const formatDate = (dateStr) => {
   if (parts.length !== 3) return dateStr;
   return `${parts[2]}-${parts[1]}-${parts[0]}`;
 };
+
+const formatHours = (value) => `${Number(value || 0).toFixed(2)}h`;
 
 const EmployeeSubmissions = () => {
   const [filters, setFilters] = useState(initialFilters);
@@ -72,7 +74,9 @@ const EmployeeSubmissions = () => {
   };
 
   const handleSelectEntry = (entry) => {
-    setSelected(entry);
+    getAdminTimesheetDetail(entry.id)
+      .then((res) => setSelected(res.data))
+      .catch(() => setSelected(entry));
   };
 
   return (
@@ -110,7 +114,7 @@ const EmployeeSubmissions = () => {
                   </colgroup>
                   <thead className="bg-slate-50">
                     <tr>
-                      {['Employee', 'Project', 'Date', 'Hours'].map((header) => (
+                      {['Employee', 'Projects', 'Date', 'Total Hours'].map((header) => (
                         <th className={thClass} key={header}>{header}</th>
                       ))}
                       <th className={`${thClass} text-right`} key="Action">Action</th>
@@ -125,9 +129,9 @@ const EmployeeSubmissions = () => {
                           <p className="font-semibold text-slate-950">{entry.employee_name}</p>
                           <p className="text-xs text-slate-400">{entry.employee_id}</p>
                         </td>
-                        <td className={tdClass}>{entry.project_name}</td>
+                        <td className={tdClass}>{entry.project_names?.join(', ') || '-'}</td>
                         <td className={tdClass}>{formatDate(entry.date)}</td>
-                        <td className={tdClass}>{entry.actual_hours}</td>
+                        <td className={tdClass}>{formatHours(entry.total_actual_hours)}</td>
                         <td className={`${tdClass} text-right`}>
                           <button className={buttonClass.ghost} type="button" onClick={() => handleSelectEntry(entry)}>
                             <Eye size={15} /> View
@@ -166,44 +170,59 @@ const EmployeeSubmissions = () => {
                 </div>
 
                 <div className="p-5">
-                  {/* Table-style detail like timesheet row */}
+                  <div className="mb-4 grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                      <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Report Date</p>
+                      <p className="mt-1 text-lg font-black text-slate-900">{formatDate(selected.date)}</p>
+                    </div>
+                    <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3">
+                      <p className="text-xs font-bold uppercase tracking-wide text-blue-500">Total Planned Hours</p>
+                      <p className="mt-1 text-lg font-black text-blue-700">{formatHours(selected.total_planned_hours)}</p>
+                    </div>
+                    <div className="rounded-lg border border-orange-100 bg-orange-50 px-4 py-3">
+                      <p className="text-xs font-bold uppercase tracking-wide text-orange-500">Total Actual Hours</p>
+                      <p className="mt-1 text-lg font-black text-orange-700">{formatHours(selected.total_actual_hours)}</p>
+                    </div>
+                  </div>
+
                   <div className="overflow-x-auto rounded-lg border border-slate-200">
                     <table className="min-w-full text-sm">
                       <thead className="bg-slate-50">
                         <tr>
-                          <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wide text-slate-500" rowSpan={2}>Project Name</th>
-                          <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wide text-slate-500" rowSpan={2}>Date</th>
+                          <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wide text-slate-500" rowSpan={2}>Project</th>
                           <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wide text-slate-500" rowSpan={2}>Milestone</th>
-                          <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wide text-slate-500" rowSpan={2}>Task Description</th>
-                          <th className="px-3 py-2 text-center text-xs font-bold uppercase tracking-wide text-slate-500 border-l border-slate-200" colSpan={3}>Planned Time</th>
-                          <th className="px-3 py-2 text-center text-xs font-bold uppercase tracking-wide text-orange-500 border-l border-slate-200" colSpan={3}>Actual Time</th>
+                          <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wide text-slate-500" rowSpan={2}>Task</th>
+                          <th className="px-3 py-2 text-center text-xs font-bold uppercase tracking-wide text-blue-600 border-l border-slate-200" colSpan={3}>SOD Planned Time</th>
+                          <th className="px-3 py-2 text-center text-xs font-bold uppercase tracking-wide text-orange-500 border-l border-slate-200" colSpan={3}>EOD Actual Time</th>
+                          <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wide text-slate-500" rowSpan={2}>Remarks</th>
                         </tr>
                         <tr>
-                          <th className="px-3 py-1.5 text-center text-xs font-semibold text-slate-400 border-l border-slate-200">From</th>
-                          <th className="px-3 py-1.5 text-center text-xs font-semibold text-slate-400">To</th>
-                          <th className="px-3 py-1.5 text-center text-xs font-semibold text-slate-400">Dur</th>
+                          <th className="px-3 py-1.5 text-center text-xs font-semibold text-blue-500 border-l border-slate-200">From</th>
+                          <th className="px-3 py-1.5 text-center text-xs font-semibold text-blue-500">To</th>
+                          <th className="px-3 py-1.5 text-center text-xs font-semibold text-blue-500">Duration</th>
                           <th className="px-3 py-1.5 text-center text-xs font-semibold text-orange-400 border-l border-slate-200">From</th>
                           <th className="px-3 py-1.5 text-center text-xs font-semibold text-orange-400">To</th>
-                          <th className="px-3 py-1.5 text-center text-xs font-semibold text-orange-400">Dur</th>
+                          <th className="px-3 py-1.5 text-center text-xs font-semibold text-orange-400">Duration</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <tr className="border-t border-slate-100">
-                          <td className="px-3 py-3 font-medium text-slate-800">{selected.project_name || '-'}</td>
-                          <td className="px-3 py-3 text-slate-600">{formatDate(selected.date)}</td>
-                          <td className="px-3 py-3 text-slate-600">{selected.milestone_name || '-'}</td>
-                          <td className="px-3 py-3 text-slate-600">{selected.task_name || '-'}</td>
-                          <td className="px-3 py-3 text-center text-slate-700 border-l border-slate-100">{formatTimeAMPM(selected.planned_start)}</td>
-                          <td className="px-3 py-3 text-center text-slate-700">{formatTimeAMPM(selected.planned_end)}</td>
-                          <td className="px-3 py-3 text-center font-semibold text-blue-600 bg-blue-50">{selected.planned_hours}</td>
-                          <td className="px-3 py-3 text-center text-slate-700 border-l border-slate-100">{formatTimeAMPM(selected.actual_start)}</td>
-                          <td className="px-3 py-3 text-center text-slate-700">{formatTimeAMPM(selected.actual_end)}</td>
-                          <td className="px-3 py-3 text-center font-semibold text-orange-600 bg-orange-50">{selected.actual_hours}</td>
-                        </tr>
+                        {(selected.tasks || []).map((task) => (
+                          <tr className="border-t border-slate-100" key={task.id}>
+                            <td className="px-3 py-3 font-medium text-slate-800">{task.project_name || '-'}</td>
+                            <td className="px-3 py-3 text-slate-600">{task.milestone_name || '-'}</td>
+                            <td className="px-3 py-3 text-slate-600">{task.task_name || '-'}</td>
+                            <td className="px-3 py-3 text-center text-slate-700 border-l border-slate-100">{formatTimeAMPM(task.planned_start)}</td>
+                            <td className="px-3 py-3 text-center text-slate-700">{formatTimeAMPM(task.planned_end)}</td>
+                            <td className="px-3 py-3 text-center font-semibold text-blue-600 bg-blue-50">{formatHours(task.planned_hours)}</td>
+                            <td className="px-3 py-3 text-center text-slate-700 border-l border-slate-100">{formatTimeAMPM(task.actual_start)}</td>
+                            <td className="px-3 py-3 text-center text-slate-700">{formatTimeAMPM(task.actual_end)}</td>
+                            <td className="px-3 py-3 text-center font-semibold text-orange-600 bg-orange-50">{formatHours(task.actual_hours)}</td>
+                            <td className="px-3 py-3 text-slate-600">{task.remarks || '-'}</td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   </div>
-
                 </div>
 
                 <div className="flex justify-end px-5 py-4 border-t border-slate-200">

@@ -143,7 +143,11 @@ const TimesheetPage = () => {
     }));
   };
 
-  const addTask = () => setRows((cur) => [...cur, emptyRow()]);
+  const addTask = () => {
+    setError('');
+    setMessage('');
+    setRows((cur) => [...cur, emptyRow()]);
+  };
 
   const removeTask = async (row) => {
     if (!row.isExisting) {
@@ -505,9 +509,10 @@ const TimesheetPage = () => {
                             <td className="p-1 text-center">
                               <button
                                 className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-30"
-                                disabled={isReadOnly || rows.length === 1}
+                                disabled={isReadOnly}
                                 onClick={() => removeTask(row)}
                                 type="button"
+                                title={isReadOnly ? 'Submitted tasks cannot be deleted' : 'Delete task'}
                               >
                                 <Trash2 size={13} />
                               </button>
@@ -525,7 +530,6 @@ const TimesheetPage = () => {
                   className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
                   onClick={addTask}
                   type="button"
-                  disabled={rows.every(r => r.status === 'submitted')}
                 >
                   <Plus size={15} /> Add Task
                 </button>

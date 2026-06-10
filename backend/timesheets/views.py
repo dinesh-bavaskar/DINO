@@ -9,9 +9,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.models import Employee
-from .models import Milestone, Project, Timesheet
+from .models import DailyReport, Milestone, Project, Timesheet
 from .serializers import (
     DAILY_HOUR_LIMIT,
+    DailyReportSerializer,
     MilestoneSerializer,
     ProjectSerializer,
     TimesheetReviewSerializer,
@@ -278,31 +279,37 @@ class AdminTimesheetListView(AdminOnlyMixin, APIView):
         if error:
             return error
 
-        entries = Timesheet.objects.select_related('daily_report__employee', 'project', 'milestone').all().order_by('-daily_report__date', '-updated_at')
+        reports = DailyReport.objects.prefetch_related(
+            'tasks__project',
+            'tasks__milestone',
+        ).select_related('employee').all().order_by('-date', '-updated_at')
         employee = request.query_params.get('employee')
         date_from = request.query_params.get('date')
         date_to = request.query_params.get('dateTo')
         project_id = request.query_params.get('projectId')
+        project_name = request.query_params.get('project')
         status_filter = request.query_params.get('status')
 
         if employee:
-            entries = entries.filter(
-                Q(daily_report__employee__employee_id__icontains=employee) |
-                Q(daily_report__employee__full_name__icontains=employee) |
-                Q(daily_report__employee__email__icontains=employee)
+            reports = reports.filter(
+                Q(employee__employee_id__icontains=employee) |
+                Q(employee__full_name__icontains=employee) |
+                Q(employee__email__icontains=employee)
             )
         # Date range filtering
         if date_from:
-            entries = entries.filter(daily_report__date__gte=date_from)
+            reports = reports.filter(date__gte=date_from)
         if date_to:
-            entries = entries.filter(daily_report__date__lte=date_to)
+            reports = reports.filter(date__lte=date_to)
         # Project filter by ID
         if project_id:
-            entries = entries.filter(project__id=project_id)
+            reports = reports.filter(tasks__project__id=project_id)
+        if project_name:
+            reports = reports.filter(tasks__project__name__icontains=project_name)
         if status_filter:
-            entries = entries.filter(daily_report__status=status_filter)
+            reports = reports.filter(status=status_filter)
 
-        return paginated_response(request, entries, TimesheetSerializer)
+        return paginated_response(request, reports.distinct(), DailyReportSerializer)
 
 
 class AdminTimesheetDetailView(AdminOnlyMixin, APIView):
@@ -311,10 +318,20 @@ class AdminTimesheetDetailView(AdminOnlyMixin, APIView):
         if error:
             return error
         try:
-            entry = Timesheet.objects.select_related('daily_report__employee').get(pk=pk)
-        except Timesheet.DoesNotExist:
-            return Response({'detail': 'Timesheet entry not found.'}, status=status.HTTP_404_NOT_FOUND)
-        return Response(TimesheetSerializer(entry).data)
+            report = DailyReport.objects.prefetch_related(
+                'tasks__project',
+                'tasks__milestone',
+            ).select_related('employee').get(pk=pk)
+        except DailyReport.DoesNotExist:
+            try:
+                entry = Timesheet.objects.select_related('daily_report').get(pk=pk)
+                report = DailyReport.objects.prefetch_related(
+                    'tasks__project',
+                    'tasks__milestone',
+                ).select_related('employee').get(pk=entry.daily_report_id)
+            except Timesheet.DoesNotExist:
+                return Response({'detail': 'Daily report not found.'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(DailyReportSerializer(report).data)
 
 
 class AdminTimesheetReviewView(AdminOnlyMixin, APIView):
@@ -323,19 +340,28 @@ class AdminTimesheetReviewView(AdminOnlyMixin, APIView):
         if error:
             return error
         try:
-            entry = Timesheet.objects.select_related('daily_report__employee').get(pk=pk)
-        except Timesheet.DoesNotExist:
-            return Response({'detail': 'Timesheet entry not found.'}, status=status.HTTP_404_NOT_FOUND)
+            report = DailyReport.objects.prefetch_related(
+                'tasks__project',
+                'tasks__milestone',
+            ).select_related('employee').get(pk=pk)
+        except DailyReport.DoesNotExist:
+            try:
+                entry = Timesheet.objects.select_related('daily_report').get(pk=pk)
+                report = DailyReport.objects.prefetch_related(
+                    'tasks__project',
+                    'tasks__milestone',
+                ).select_related('employee').get(pk=entry.daily_report_id)
+            except Timesheet.DoesNotExist:
+                return Response({'detail': 'Daily report not found.'}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = TimesheetReviewSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        report = entry.daily_report
         report.status = serializer.validated_data['status']
         report.review_comments = serializer.validated_data.get('review_comments', '')
         report.reviewed_at = timezone.now()
         if not report.submitted_at:
             report.submitted_at = timezone.now()
         report.save()
-        return Response(TimesheetSerializer(entry).data)
+        return Response(DailyReportSerializer(report).data)

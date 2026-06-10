@@ -153,6 +153,45 @@ class TimesheetSerializer(serializers.ModelSerializer):
         return Timesheet.objects.create(**validated_data)
 
 
+class DailyReportSerializer(serializers.ModelSerializer):
+    employee_id = serializers.CharField(source='employee.employee_id', read_only=True)
+    employee_name = serializers.CharField(source='employee.full_name', read_only=True)
+    employee_email = serializers.EmailField(source='employee.email', read_only=True)
+    tasks = TimesheetSerializer(many=True, read_only=True)
+    task_count = serializers.SerializerMethodField()
+    total_planned_hours = serializers.SerializerMethodField()
+    total_actual_hours = serializers.SerializerMethodField()
+    project_names = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DailyReport
+        fields = [
+            'id', 'employee_id', 'employee_name', 'employee_email', 'date',
+            'status', 'review_comments', 'submitted_at', 'reviewed_at',
+            'task_count', 'total_planned_hours', 'total_actual_hours',
+            'project_names', 'tasks', 'created_at', 'updated_at'
+        ]
+        read_only_fields = fields
+
+    def get_total_planned_hours(self, obj):
+        total = sum((task.planned_hours for task in obj.tasks.all()), Decimal('0.00'))
+        return str(total.quantize(Decimal('0.01')))
+
+    def get_task_count(self, obj):
+        return obj.tasks.count()
+
+    def get_total_actual_hours(self, obj):
+        total = sum((task.actual_hours for task in obj.tasks.all()), Decimal('0.00'))
+        return str(total.quantize(Decimal('0.01')))
+
+    def get_project_names(self, obj):
+        names = []
+        for task in obj.tasks.all():
+            if task.project_name and task.project_name not in names:
+                names.append(task.project_name)
+        return names
+
+
 class TimesheetSubmitSerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=[Timesheet.STATUS_DRAFT, Timesheet.STATUS_SUBMITTED])
 

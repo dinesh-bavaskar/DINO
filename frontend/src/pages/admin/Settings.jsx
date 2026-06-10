@@ -223,6 +223,7 @@ const Settings = () => {
               <SettingsIcon size={14} className="text-slate-500" /> Other Settings
             </button>
           </div>
+
           <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-5">
               <h1 className="text-xl font-bold text-slate-950">Project & Milestone Settings</h1>
@@ -300,7 +301,6 @@ const Settings = () => {
                     const projectMilestones = milestones.filter((m) => Number(m.project_id ?? m.project) === Number(project.id));
                     return (
                       <div className="flex flex-col gap-3 px-4 py-4 hover:bg-slate-50 transition-colors" key={project.id}>
-                        {/* Main Row: Project Name | Milestones | Buttons */}
                         <div className="flex items-center justify-between gap-4">
                           {/* Project Name - Left */}
                           <div className="w-20 flex-shrink-0 sm:w-24">
@@ -368,144 +368,171 @@ const Settings = () => {
             </div>
           </section>
         </div>
-    </main>
+      </main>
 
-    <Dialog open={isOtherSettingsOpen} onOpenChange={setIsOtherSettingsOpen}>
-      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto bg-white">
-        <DialogHeader className="border-b border-slate-100 pb-3">
-          <DialogTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
-            <SettingsIcon className="text-blue-600" size={20} />
-            Other Settings
-          </DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSaveOtherSettings} className="space-y-6 py-4">
-          <div className="grid gap-6 md:grid-cols-3">
-            {/* Roles Section */}
-            <div className="space-y-3">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Roles</label>
-              <div className="flex flex-wrap gap-1.5 p-2 rounded-lg border border-slate-200 bg-slate-50 min-h-[120px] max-h-[185px] overflow-y-auto align-content-start">
-                {draftRoles.map((role) => (
-                  <span key={role} className="inline-flex items-center gap-1 rounded bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
-                    {role}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveRole(role)}
-                      className="text-blue-500 hover:text-blue-700 font-bold ml-1 text-sm leading-none"
+      {/* ── Other Settings Dialog ─────────────────────────────── */}
+      <Dialog open={isOtherSettingsOpen} onOpenChange={setIsOtherSettingsOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto bg-white">
+          <DialogHeader className="border-b border-slate-100 pb-3">
+            <DialogTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <SettingsIcon className="text-blue-600" size={20} />
+              Other Settings
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSaveOtherSettings} className="space-y-6 py-4">
+            <div className="flex flex-col gap-5">
+
+              {/* Roles Section */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Roles</label>
+                {/* Input row at top */}
+                <div className="flex gap-2">
+                  <input
+                    className={`${inputClass} flex-1`}
+                    placeholder="Add role..."
+                    value={newRole}
+                    onChange={(e) => setNewRole(e.target.value)}
+                    onKeyDown={(e) => handleInputKeyDown(e, handleAddRole)}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddRole}
+                    className={`${buttonClass.primary} px-5 shrink-0`}
+                  >
+                    Add
+                  </button>
+                </div>
+                {/* Tags below */}
+                <div className="flex flex-wrap gap-2 p-3 rounded-lg border border-slate-200 bg-slate-50 min-h-[56px]">
+                  {draftRoles.map((role) => (
+                    <span
+                      key={role}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm"
                     >
-                      &times;
-                    </button>
-                  </span>
-                ))}
+                      {role}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveRole(role)}
+                        className="text-slate-400 hover:text-slate-600 font-bold leading-none"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                  {draftRoles.length === 0 && (
+                    <span className="text-xs text-slate-400 italic">No roles added</span>
+                  )}
+                </div>
               </div>
-              <div className="flex gap-1.5">
-                <input
-                  className={`${inputClass} text-xs h-8`}
-                  placeholder="Add role..."
-                  value={newRole}
-                  onChange={(e) => setNewRole(e.target.value)}
-                  onKeyDown={(e) => handleInputKeyDown(e, handleAddRole)}
-                />
-                <button
-                  type="button"
-                  onClick={handleAddRole}
-                  className={`${buttonClass.primary} h-8 text-xs px-2.5`}
-                >
-                  Add
-                </button>
+
+              {/* Departments Section */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Departments</label>
+                {/* Input row at top */}
+                <div className="flex gap-2">
+                  <input
+                    className={`${inputClass} flex-1`}
+                    placeholder="Add department..."
+                    value={newDept}
+                    onChange={(e) => setNewDept(e.target.value)}
+                    onKeyDown={(e) => handleInputKeyDown(e, handleAddDept)}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddDept}
+                    className={`${buttonClass.primary} px-5 shrink-0`}
+                  >
+                    Add
+                  </button>
+                </div>
+                {/* Tags below */}
+                <div className="flex flex-wrap gap-2 p-3 rounded-lg border border-slate-200 bg-slate-50 min-h-[56px]">
+                  {draftDepartments.map((dept) => (
+                    <span
+                      key={dept}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm"
+                    >
+                      {dept}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveDept(dept)}
+                        className="text-slate-400 hover:text-slate-600 font-bold leading-none"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                  {draftDepartments.length === 0 && (
+                    <span className="text-xs text-slate-400 italic">No departments added</span>
+                  )}
+                </div>
               </div>
+
+              {/* Designations Section */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Designations</label>
+                {/* Input row at top */}
+                <div className="flex gap-2">
+                  <input
+                    className={`${inputClass} flex-1`}
+                    placeholder="Add designation..."
+                    value={newDesg}
+                    onChange={(e) => setNewDesg(e.target.value)}
+                    onKeyDown={(e) => handleInputKeyDown(e, handleAddDesg)}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddDesg}
+                    className={`${buttonClass.primary} px-5 shrink-0`}
+                  >
+                    Add
+                  </button>
+                </div>
+                {/* Tags below */}
+                <div className="flex flex-wrap gap-2 p-3 rounded-lg border border-slate-200 bg-slate-50 min-h-[56px]">
+                  {draftDesignations.map((desg) => (
+                    <span
+                      key={desg}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm"
+                    >
+                      {desg}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveDesg(desg)}
+                        className="text-slate-400 hover:text-slate-600 font-bold leading-none"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                  {draftDesignations.length === 0 && (
+                    <span className="text-xs text-slate-400 italic">No designations added</span>
+                  )}
+                </div>
+              </div>
+
             </div>
 
-            {/* Departments Section */}
-            <div className="space-y-3">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Departments</label>
-              <div className="flex flex-wrap gap-1.5 p-2 rounded-lg border border-slate-200 bg-slate-50 min-h-[120px] max-h-[185px] overflow-y-auto align-content-start">
-                {draftDepartments.map((dept) => (
-                  <span key={dept} className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
-                    {dept}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveDept(dept)}
-                      className="text-emerald-500 hover:text-emerald-700 font-bold ml-1 text-sm leading-none"
-                    >
-                      &times;
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <div className="flex gap-1.5">
-                <input
-                  className={`${inputClass} text-xs h-8`}
-                  placeholder="Add dept..."
-                  value={newDept}
-                  onChange={(e) => setNewDept(e.target.value)}
-                  onKeyDown={(e) => handleInputKeyDown(e, handleAddDept)}
-                />
-                <button
-                  type="button"
-                  onClick={handleAddDept}
-                  className={`${buttonClass.primary} h-8 text-xs px-2.5`}
-                >
-                  Add
-                </button>
-              </div>
+            <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
+              <button
+                className={buttonClass.outline}
+                onClick={() => setIsOtherSettingsOpen(false)}
+                type="button"
+              >
+                Cancel
+              </button>
+              <button
+                className={buttonClass.admin}
+                type="submit"
+              >
+                Save Changes
+              </button>
             </div>
-
-            {/* Designations Section */}
-            <div className="space-y-3">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Designations</label>
-              <div className="flex flex-wrap gap-1.5 p-2 rounded-lg border border-slate-200 bg-slate-50 min-h-[120px] max-h-[185px] overflow-y-auto align-content-start">
-                {draftDesignations.map((desg) => (
-                  <span key={desg} className="inline-flex items-center gap-1 rounded bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700">
-                    {desg}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveDesg(desg)}
-                      className="text-indigo-500 hover:text-indigo-700 font-bold ml-1 text-sm leading-none"
-                    >
-                      &times;
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <div className="flex gap-1.5">
-                <input
-                  className={`${inputClass} text-xs h-8`}
-                  placeholder="Add desg..."
-                  value={newDesg}
-                  onChange={(e) => setNewDesg(e.target.value)}
-                  onKeyDown={(e) => handleInputKeyDown(e, handleAddDesg)}
-                />
-                <button
-                  type="button"
-                  onClick={handleAddDesg}
-                  className={`${buttonClass.primary} h-8 text-xs px-2.5`}
-                >
-                  Add
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
-            <button
-              className={buttonClass.outline}
-              onClick={() => setIsOtherSettingsOpen(false)}
-              type="button"
-            >
-              Cancel
-            </button>
-            <button
-              className={buttonClass.admin}
-              type="submit"
-            >
-              Save Changes
-            </button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
-  </DashboardLayout>
-);
+          </form>
+        </DialogContent>
+      </Dialog>
+    </DashboardLayout>
+  );
 };
 
 export default Settings;
