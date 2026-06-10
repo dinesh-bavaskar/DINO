@@ -3,18 +3,10 @@ import { Eye, Search, X } from 'lucide-react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import Navbar from '../../components/common/Navbar';
 import Loader from '../../components/common/Loader';
-import { Badge, StatusBadge } from '../../components/ui';
 import { buttonClass, inputClass, tdClass, thClass } from '../../components/uiClasses';
-import { getAdminTimesheets, reviewTimesheet, getProjects } from '../../services/timesheetService';
+import { getAdminTimesheets, getProjects } from '../../services/timesheetService';
 
 const initialFilters = { employee: '', date: '', dateTo: '', projectId: '' };
-
-const DetailRow = ({ label, value }) => (
-  <div>
-    <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{label}</p>
-    <p className="mt-1 text-sm font-semibold text-slate-800">{value || '-'}</p>
-  </div>
-);
 
 const formatTimeAMPM = (timeStr) => {
   if (!timeStr) return '—';
@@ -47,20 +39,7 @@ const EmployeeSubmissions = () => {
   const [loading, setLoading] = useState(true);
   const [meta, setMeta] = useState(null);
   const [page, setPage] = useState(1);
-  const [reviewComments, setReviewComments] = useState('');
-  const [reviewing, setReviewing] = useState(false);
   const [projects, setProjects] = useState([]);
-
-  const loadData = () => {
-    setLoading(true);
-    getAdminTimesheets({ ...filters, page })
-      .then((res) => {
-        setEntries(res.data);
-        setMeta(res.meta);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  };
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -94,22 +73,6 @@ const EmployeeSubmissions = () => {
 
   const handleSelectEntry = (entry) => {
     setSelected(entry);
-    setReviewComments(entry.review_comments || '');
-  };
-
-  const handleReview = (nextStatus) => {
-    if (!selected) return;
-    setReviewing(true);
-    reviewTimesheet(selected.id, { status: nextStatus, review_comments: reviewComments })
-      .then(() => {
-        setSelected(null);
-        setReviewComments('');
-        loadData();
-      })
-      .catch((err) => {
-        alert(err.response?.data?.detail || 'Unable to submit review.');
-      })
-      .finally(() => setReviewing(false));
   };
 
   return (
@@ -188,19 +151,18 @@ const EmployeeSubmissions = () => {
           )}
 
           {selected && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => { setSelected(null); setReviewComments(''); }}>
-              <div className="relative w-full max-w-4xl mx-4 rounded-xl bg-white shadow-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setSelected(null)}>
+              <div className="relative w-full max-w-6xl mx-4 rounded-xl bg-white shadow-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between p-5 border-b border-slate-200">
                   <div>
                     <h2 className="text-lg font-bold text-slate-950">Submission Detail</h2>
-                    <p className="text-sm text-slate-500">{selected.employee_name} • {selected.employee_email} • <span className="font-medium text-slate-700">{selected.employee_id}</span></p>
+                    <p className="text-sm text-slate-500">
+                      {selected.employee_name} • {selected.employee_email} • <span className="font-medium text-slate-700">{selected.employee_id}</span>
+                    </p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <StatusBadge status={selected.status} />
-                    <button className="text-slate-400 hover:text-slate-600 transition" onClick={() => { setSelected(null); setReviewComments(''); }} type="button">
-                      <X size={20} />
-                    </button>
-                  </div>
+                  <button className="text-slate-400 hover:text-slate-600 transition" onClick={() => setSelected(null)} type="button">
+                    <X size={20} />
+                  </button>
                 </div>
 
                 <div className="p-5">
@@ -209,7 +171,8 @@ const EmployeeSubmissions = () => {
                     <table className="min-w-full text-sm">
                       <thead className="bg-slate-50">
                         <tr>
-                          <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wide text-slate-500" rowSpan={2}>Project</th>
+                          <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wide text-slate-500" rowSpan={2}>Project Name</th>
+                          <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wide text-slate-500" rowSpan={2}>Date</th>
                           <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wide text-slate-500" rowSpan={2}>Milestone</th>
                           <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wide text-slate-500" rowSpan={2}>Task Description</th>
                           <th className="px-3 py-2 text-center text-xs font-bold uppercase tracking-wide text-slate-500 border-l border-slate-200" colSpan={3}>Planned Time</th>
@@ -227,6 +190,7 @@ const EmployeeSubmissions = () => {
                       <tbody>
                         <tr className="border-t border-slate-100">
                           <td className="px-3 py-3 font-medium text-slate-800">{selected.project_name || '-'}</td>
+                          <td className="px-3 py-3 text-slate-600">{formatDate(selected.date)}</td>
                           <td className="px-3 py-3 text-slate-600">{selected.milestone_name || '-'}</td>
                           <td className="px-3 py-3 text-slate-600">{selected.task_name || '-'}</td>
                           <td className="px-3 py-3 text-center text-slate-700 border-l border-slate-100">{formatTimeAMPM(selected.planned_start)}</td>
@@ -240,62 +204,10 @@ const EmployeeSubmissions = () => {
                     </table>
                   </div>
 
-                  {/* Additional info row */}
-                  <div className="grid grid-cols-3 gap-4 mt-5">
-                    <DetailRow label="Task Type" value={<Badge>{selected.task_type}</Badge>} />
-                    <DetailRow label="Date" value={formatDate(selected.date)} />
-                    <DetailRow label="Submission Date" value={selected.submitted_at ? new Date(selected.submitted_at).toLocaleString('en-GB') : '—'} />
-                  </div>
-
-                  {selected.remarks && (
-                    <div className="mt-4">
-                      <DetailRow label="Remarks" value={selected.remarks} />
-                    </div>
-                  )}
-
-                  {selected.status === 'submitted' ? (
-                    <div className="mt-6 border-t border-slate-100 pt-5">
-                      <h3 className="text-sm font-bold text-slate-950 mb-3">Review Action</h3>
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-xs font-bold uppercase tracking-wide text-slate-400 mb-1.5">Review Comments</label>
-                          <textarea
-                            className="w-full rounded-md border border-slate-300 p-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                            placeholder="Add comments or reasons for approval/rejection..."
-                            rows={3}
-                            value={reviewComments}
-                            onChange={(e) => setReviewComments(e.target.value)}
-                          />
-                        </div>
-                        <div className="flex gap-2 justify-end">
-                          <button
-                            className="rounded-lg bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-100 transition"
-                            disabled={reviewing}
-                            onClick={() => handleReview('rejected')}
-                          >
-                            Reject
-                          </button>
-                          <button
-                            className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 transition"
-                            disabled={reviewing}
-                            onClick={() => handleReview('approved')}
-                          >
-                            Approve
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    selected.review_comments && (
-                      <div className="mt-6 border-t border-slate-100 pt-5">
-                        <DetailRow label="Review Comments" value={selected.review_comments} />
-                      </div>
-                    )
-                  )}
                 </div>
 
-                <div className="flex justify-end gap-2 px-5 py-4 border-t border-slate-200">
-                  <button className={buttonClass.outline} onClick={() => { setSelected(null); setReviewComments(''); }} type="button">Cancel</button>
+                <div className="flex justify-end px-5 py-4 border-t border-slate-200">
+                  <button className={buttonClass.outline} onClick={() => setSelected(null)} type="button">Close</button>
                 </div>
               </div>
             </div>

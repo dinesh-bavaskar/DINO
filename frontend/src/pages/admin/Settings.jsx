@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Plus, Trash2, Settings as SettingsIcon } from 'lucide-react';
+import { Plus, Power, Trash2, Settings as SettingsIcon } from 'lucide-react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import Navbar from '../../components/common/Navbar';
 import Loader from '../../components/common/Loader';
 import { buttonClass, inputClass } from '../../components/uiClasses';
 import {
-  createProject, deleteProject, getAdminProjects,
+  createProject, deleteProject, getAdminProjects, updateProject,
   createMilestone, deleteMilestone, getAdminMilestones,
 } from '../../services/timesheetService';
 import {
@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../../components/ui/dialog';
+import { Switch } from '../../components/ui/switch';
 
 const Settings = () => {
   // ── Projects ──────────────────────────────────────────────
@@ -166,6 +167,16 @@ const Settings = () => {
     }
   };
 
+  const toggleProjectStatus = async (project) => {
+    setProjectError('');
+    try {
+      await updateProject(project.id, { is_active: !project.is_active });
+      loadProjects();
+    } catch (err) {
+      setProjectError(err.response?.data?.detail || 'Unable to update project status.');
+    }
+  };
+
   // ── Milestone actions ─────────────────────────────────────
   const addMilestone = async (event) => {
     event.preventDefault();
@@ -212,143 +223,151 @@ const Settings = () => {
               <SettingsIcon size={14} className="text-slate-500" /> Other Settings
             </button>
           </div>
-          <div className="grid gap-6 md:grid-cols-2 items-start">
+          <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-5">
+              <h1 className="text-xl font-bold text-slate-950">Project & Milestone Settings</h1>
+            </div>
 
-          {/* ── Project Settings ───────────────────────────────── */}
-          <div className="space-y-4">
-            <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="mb-4">
-                <h1 className="text-xl font-bold text-slate-950">Project Settings</h1>
-              </div>
-
-              <form className="flex flex-col gap-3 sm:flex-row" onSubmit={addProject}>
-                <input
-                  className={`${inputClass} sm:max-w-xs`}
-                  id="project-name-input"
-                  onChange={(e) => setProjectName(e.target.value)}
-                  placeholder="Project name"
-                  value={projectName}
-                />
-                <button className={`${buttonClass.primary} whitespace-nowrap shrink-0`} disabled={savingProject} type="submit" id="add-project-btn">
-                  <Plus size={16} /> {savingProject ? 'Adding...' : 'Add Project'}
-                </button>
+            <div className="grid gap-5 lg:grid-cols-2">
+              <form className="space-y-3" onSubmit={addProject}>
+                <h2 className="text-sm font-bold text-slate-700">Add Project</h2>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <input
+                    className={inputClass}
+                    id="project-name-input"
+                    onChange={(e) => setProjectName(e.target.value)}
+                    placeholder="Project name"
+                    value={projectName}
+                  />
+                  <button className={`${buttonClass.primary} whitespace-nowrap shrink-0`} disabled={savingProject} type="submit" id="add-project-btn">
+                    <Plus size={16} /> {savingProject ? 'Adding...' : 'Add Project'}
+                  </button>
+                </div>
               </form>
 
-              {projectError && (
-                <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-                  {projectError}
+              <form className="space-y-3" onSubmit={addMilestone}>
+                <h2 className="text-sm font-bold text-slate-700">Add Milestone</h2>
+                <div className="grid gap-3 sm:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)_auto]">
+                  <select
+                    className={inputClass}
+                    id="milestone-project-select"
+                    onChange={(e) => setMilestoneProject(e.target.value)}
+                    value={milestoneProject}
+                  >
+                    <option value="">Select Project</option>
+                    {projects.filter((p) => p.is_active).map((p) => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                  <input
+                    className={inputClass}
+                    id="milestone-name-input"
+                    onChange={(e) => setMilestoneName(e.target.value)}
+                    placeholder="Milestone name"
+                    value={milestoneName}
+                  />
+                  <button
+                    className={`${buttonClass.primary} whitespace-nowrap shrink-0`}
+                    disabled={savingMilestone || !milestoneProject}
+                    id="add-milestone-btn"
+                    type="submit"
+                  >
+                    <Plus size={16} /> {savingMilestone ? 'Adding...' : 'Add Milestone'}
+                  </button>
                 </div>
-              )}
-            </section>
-
-            <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-              <div className="border-b border-slate-200 bg-blue-50 px-4 py-3">
-                <h2 className="text-sm font-bold text-slate-950">Project Names</h2>
-              </div>
-              {loadingProjects ? <Loader text="Loading projects..." /> : (
-                <div className="divide-y divide-slate-100">
-                  {projects.length === 0 ? (
-                    <div className="px-4 py-10 text-center text-sm text-slate-400">No projects added yet.</div>
-                  ) : projects.map((project) => (
-                    <div className="flex items-center justify-between gap-3 px-4 py-3" key={project.id}>
-                      <div>
-                        <p className="text-sm font-semibold text-slate-950">{project.name}</p>
-                        <p className="text-xs text-slate-400">{project.is_active ? 'Active' : 'Inactive'}</p>
-                      </div>
-                      <button
-                        className={buttonClass.ghost}
-                        id={`delete-project-${project.id}`}
-                        onClick={() => removeProject(project)}
-                        type="button"
-                      >
-                        <Trash2 size={15} /> Delete
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
-          </div>
-
-          {/* ── Milestone Settings ─────────────────────────────── */}
-          <div className="space-y-4">
-            <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="mb-4">
-                <h2 className="text-xl font-bold text-slate-950">Milestone Settings</h2>
-              </div>
-
-              <form className="flex flex-col gap-3 sm:flex-row" onSubmit={addMilestone}>
-                <select
-                  className={`${inputClass} sm:w-44`}
-                  id="milestone-project-select"
-                  onChange={(e) => setMilestoneProject(e.target.value)}
-                  value={milestoneProject}
-                >
-                  <option value="">Select Project</option>
-                  {projects.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
-                <input
-                  className={`${inputClass} sm:max-w-xs`}
-                  id="milestone-name-input"
-                  onChange={(e) => setMilestoneName(e.target.value)}
-                  placeholder="Milestone name"
-                  value={milestoneName}
-                />
-                <button
-                  className={`${buttonClass.primary} whitespace-nowrap shrink-0`}
-                  disabled={savingMilestone || !milestoneProject}
-                  id="add-milestone-btn"
-                  type="submit"
-                >
-                  <Plus size={16} /> {savingMilestone ? 'Adding...' : 'Add Milestone'}
-                </button>
               </form>
+            </div>
 
-              {milestoneError && (
-                <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-                  {milestoneError}
-                </div>
-              )}
-            </section>
-
-            <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-              <div className="border-b border-slate-200 bg-indigo-50 px-4 py-3">
-                <h2 className="text-sm font-bold text-slate-950">Milestones</h2>
+            {(projectError || milestoneError) && (
+              <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                {projectError || milestoneError}
               </div>
-              {loadingMilestones ? <Loader text="Loading milestones..." /> : (
+            )}
+          </section>
+
+          <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
+              <h2 className="text-sm font-bold text-slate-950">Projects & Milestones</h2>
+            </div>
+            <div>
+              {loadingProjects || loadingMilestones ? (
+                <Loader text="Loading projects and milestones..." />
+              ) : projects.length === 0 ? (
+                <div className="px-4 py-10 text-center text-sm text-slate-400">No projects added yet.</div>
+              ) : (
                 <div className="divide-y divide-slate-100">
-                  {milestones.length === 0 ? (
-                    <div className="px-4 py-10 text-center text-sm text-slate-400">No milestones added yet.</div>
-                  ) : milestones.map((milestone) => (
-                    <div className="flex items-center justify-between gap-3 px-4 py-3" key={milestone.id}>
-                      <div>
-                        <p className="text-sm font-semibold text-slate-950">{milestone.name}</p>
-                        <p className="text-xs text-slate-400">
-                          <span className="inline-flex items-center gap-1">
-                            <span className="inline-block h-1.5 w-1.5 rounded-full bg-indigo-400" />
-                            {milestone.project_name}
-                          </span>
-                        </p>
+                  {projects.map((project) => {
+                    const projectMilestones = milestones.filter((m) => m.project_id === project.id);
+                    return (
+                      <div className="flex flex-col gap-3 px-4 py-3 hover:bg-slate-50 transition-colors" key={project.id}>
+                        {/* Main Row: Project Name | Milestones | Buttons */}
+                        <div className="flex items-start justify-between gap-4">
+                          {/* Project Name - Left */}
+                          <div className="flex-shrink-0">
+                            <p className="text-sm font-semibold text-slate-950">{project.name}</p>
+                            <p className={`text-xs font-medium ${project.is_active ? 'text-green-600' : 'text-slate-400'}`}>
+                              {project.is_active ? 'Active' : 'Inactive'}
+                            </p>
+                          </div>
+
+                          {/* Milestones - Middle */}
+                          <div className="flex-1 min-w-0">
+                            {projectMilestones.length > 0 ? (
+                              <div className="flex flex-wrap gap-2">
+                                {projectMilestones.map((milestone) => (
+                                  <span
+                                    key={milestone.id}
+                                    className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1.5 border border-green-200"
+                                  >
+                                    <span className="text-xs font-medium text-green-700">{milestone.name}</span>
+                                    <button
+                                      className="text-green-500 hover:text-green-700 font-bold text-sm leading-none"
+                                      id={`delete-milestone-${milestone.id}`}
+                                      onClick={() => removeMilestone(milestone)}
+                                      type="button"
+                                      title="Remove milestone"
+                                    >
+                                      ×
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-xs text-slate-400 italic">No milestones</span>
+                            )}
+                          </div>
+
+                          {/* Action Buttons - Right */}
+                          <div className="flex items-center gap-4 shrink-0">
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                id={`toggle-project-${project.id}`}
+                                checked={project.is_active}
+                                onCheckedChange={() => toggleProjectStatus(project)}
+                              />
+                              <span className={`text-xs font-medium ${project.is_active ? 'text-green-600' : 'text-slate-400'}`}>
+                                {project.is_active ? 'ON' : 'OFF'}
+                              </span>
+                            </div>
+                            <button
+                              className={buttonClass.ghost}
+                              id={`delete-project-${project.id}`}
+                              onClick={() => removeProject(project)}
+                              type="button"
+                              title="Delete project"
+                            >
+                              <Trash2 size={15} /> Delete
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                      <button
-                        className={buttonClass.ghost}
-                        id={`delete-milestone-${milestone.id}`}
-                        onClick={() => removeMilestone(milestone)}
-                        type="button"
-                      >
-                        <Trash2 size={15} /> Delete
-                      </button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
-            </section>
-          </div>
-
+            </div>
+          </section>
         </div>
-      </div>
     </main>
 
     <Dialog open={isOtherSettingsOpen} onOpenChange={setIsOtherSettingsOpen}>

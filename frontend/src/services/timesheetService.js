@@ -23,6 +23,7 @@ export const reviewTimesheet = (id, data) => API.post(`/admin/timesheets/${id}/r
 export const getProjects = () => API.get('/projects/');
 export const getAdminProjects = () => API.get('/admin/projects/');
 export const createProject = (data) => API.post('/admin/projects/', data);
+export const updateProject = (id, data) => API.patch(`/admin/projects/${id}/`, data);
 export const deleteProject = (id) => API.delete(`/admin/projects/${id}/`);
 export const getMilestonesByProject = (projectId) => API.get('/milestones/', { params: { project_id: projectId } });
 export const getAdminMilestones = (params = {}) => API.get('/admin/milestones/', { params });

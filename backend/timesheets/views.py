@@ -104,6 +104,20 @@ class AdminProjectListCreateView(AdminOnlyMixin, APIView):
 
 
 class AdminProjectDetailView(AdminOnlyMixin, APIView):
+    def patch(self, request, pk):
+        error = self.get_admin_error(request)
+        if error:
+            return error
+        try:
+            project = Project.objects.get(pk=pk)
+        except Project.DoesNotExist:
+            return Response({'detail': 'Project not found.'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = ProjectSerializer(project, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     def delete(self, request, pk):
         error = self.get_admin_error(request)
         if error:

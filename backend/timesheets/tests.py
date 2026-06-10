@@ -201,6 +201,26 @@ class TimesheetApiTests(TestCase):
         self.assertEqual(created.status_code, 201)
         self.assertEqual(created.data['name'], 'Payroll Portal')
 
+        deactivate = self.admin_client.patch(
+            f"/api/admin/projects/{created.data['id']}/",
+            {'is_active': False},
+            format='json'
+        )
+        self.assertEqual(deactivate.status_code, 200)
+        self.assertFalse(deactivate.data['is_active'])
+
+        employee_list = self.client.get('/api/projects/')
+        self.assertEqual(employee_list.status_code, 200)
+        self.assertEqual(employee_list.data, [])
+
+        activate = self.admin_client.patch(
+            f"/api/admin/projects/{created.data['id']}/",
+            {'is_active': True},
+            format='json'
+        )
+        self.assertEqual(activate.status_code, 200)
+        self.assertTrue(activate.data['is_active'])
+
         inactive = Project.objects.create(name='Archived Project', is_active=False)
         employee_list = self.client.get('/api/projects/')
         self.assertEqual(employee_list.status_code, 200)
