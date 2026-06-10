@@ -29,64 +29,14 @@ export const Field = ({ label, children }) => (
 );
 
 export const TimePicker = ({ value, onChange, className, disabled }) => {
-  const timeOptions = [];
-  for (let h = 0; h < 24; h++) {
-    for (let m = 0; m < 60; m += 15) {
-      const hh = String(h).padStart(2, '0');
-      const mm = String(m).padStart(2, '0');
-      const valStr = `${hh}:${mm}`;
-      
-      let displayHour = h % 12;
-      displayHour = displayHour ? displayHour : 12;
-      const displayMins = String(m).padStart(2, '0');
-      const ampm = h >= 12 ? 'PM' : 'AM';
-      
-      timeOptions.push({
-        value: valStr,
-        label: `${displayHour}:${displayMins} ${ampm}`
-      });
-    }
-  }
-
-  // Handle any custom value that is not exactly on the 15-minute interval (e.g. "16:10")
-  if (value && !timeOptions.some(opt => opt.value === value)) {
-    const parts = value.split(':');
-    if (parts.length >= 2) {
-      let rawH = parseInt(parts[0], 10);
-      let rawM = parseInt(parts[1], 10);
-      if (!isNaN(rawH) && !isNaN(rawM)) {
-        let displayHour = rawH % 12;
-        displayHour = displayHour ? displayHour : 12;
-        const displayMins = String(rawM).padStart(2, '0');
-        const ampm = rawH >= 12 ? 'PM' : 'AM';
-        
-        timeOptions.push({
-          value,
-          label: `${displayHour}:${displayMins} ${ampm}`
-        });
-        
-        timeOptions.sort((a, b) => {
-          const [ha, ma] = a.value.split(':').map(Number);
-          const [hb, mb] = b.value.split(':').map(Number);
-          return (ha * 60 + ma) - (hb * 60 + mb);
-        });
-      }
-    }
-  }
-
   return (
-    <select
+    <input
+      type="time"
+      step="60"
       disabled={disabled}
       value={value || ''}
       onChange={(e) => onChange(e.target.value)}
-      className={`bg-white border border-slate-200 shadow-sm px-2.5 py-1.5 rounded-md text-xs font-semibold text-slate-800 cursor-pointer outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 ${className}`}
-    >
-      <option value="">Select Time</option>
-      {timeOptions.map((opt) => (
-        <option key={opt.value} value={opt.value}>
-          {opt.label}
-        </option>
-      ))}
-    </select>
+      className={`bg-white border border-slate-200 shadow-sm px-2 py-1.5 rounded-md text-xs font-semibold text-slate-800 cursor-pointer outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 h-9 ${className}`}
+    />
   );
 };

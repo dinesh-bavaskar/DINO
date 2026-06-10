@@ -19,6 +19,7 @@ export const getDashboardSummary = () => API.get('/dashboard-summary/');
 export const setTimesheetSubmissionStatus = (id, status) => API.post(`/timesheets/${id}/submit/`, { status });
 export const getAdminTimesheets = (params = {}) => API.get('/admin/timesheets/', { params: withPageSize(params) }).then(normalizeList);
 export const getAdminTimesheetDetail = (id) => API.get(`/admin/timesheets/${id}/`);
+export const updateAdminTimesheetDetail = (id, data) => API.put(`/admin/timesheets/${id}/`, data);
 export const reviewTimesheet = (id, data) => API.post(`/admin/timesheets/${id}/review/`, data);
 export const getProjects = () => API.get('/projects/');
 export const getAdminProjects = () => API.get('/admin/projects/');

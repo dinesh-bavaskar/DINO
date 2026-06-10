@@ -333,6 +333,41 @@ class AdminTimesheetDetailView(AdminOnlyMixin, APIView):
                 return Response({'detail': 'Daily report not found.'}, status=status.HTTP_404_NOT_FOUND)
         return Response(DailyReportSerializer(report).data)
 
+    def put(self, request, pk):
+        error = self.get_admin_error(request)
+        if error:
+            return error
+        try:
+            report = DailyReport.objects.prefetch_related(
+                'tasks__project',
+                'tasks__milestone',
+            ).select_related('employee').get(pk=pk)
+        except DailyReport.DoesNotExist:
+            try:
+                entry = Timesheet.objects.select_related('daily_report').get(pk=pk)
+                report = DailyReport.objects.prefetch_related(
+                    'tasks__project',
+                    'tasks__milestone',
+                ).select_related('employee').get(pk=entry.daily_report_id)
+            except Timesheet.DoesNotExist:
+                return Response({'detail': 'Daily report not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        tasks_data = request.data.get('tasks', [])
+        for task_data in tasks_data:
+            task_id = task_data.get('id')
+            try:
+                task = report.tasks.get(pk=task_id)
+            except Timesheet.DoesNotExist:
+                return Response({'detail': f'Task with id {task_id} not found in this report.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            serializer = TimesheetSerializer(task, data=task_data, context={'employee': report.employee}, partial=True)
+            if not serializer.is_valid():
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            serializer.save()
+
+        report.refresh_from_db()
+        return Response(DailyReportSerializer(report).data)
+
 
 class AdminTimesheetReviewView(AdminOnlyMixin, APIView):
     def post(self, request, pk):
