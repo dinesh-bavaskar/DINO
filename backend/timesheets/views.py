@@ -266,8 +266,9 @@ class AdminTimesheetListView(AdminOnlyMixin, APIView):
 
         entries = Timesheet.objects.select_related('daily_report__employee', 'project', 'milestone').all().order_by('-daily_report__date', '-updated_at')
         employee = request.query_params.get('employee')
-        entry_date = request.query_params.get('date')
-        project = request.query_params.get('project')
+        date_from = request.query_params.get('date')
+        date_to = request.query_params.get('dateTo')
+        project_id = request.query_params.get('projectId')
         status_filter = request.query_params.get('status')
 
         if employee:
@@ -276,10 +277,14 @@ class AdminTimesheetListView(AdminOnlyMixin, APIView):
                 Q(daily_report__employee__full_name__icontains=employee) |
                 Q(daily_report__employee__email__icontains=employee)
             )
-        if entry_date:
-            entries = entries.filter(daily_report__date=entry_date)
-        if project:
-            entries = entries.filter(project__name__icontains=project)
+        # Date range filtering
+        if date_from:
+            entries = entries.filter(daily_report__date__gte=date_from)
+        if date_to:
+            entries = entries.filter(daily_report__date__lte=date_to)
+        # Project filter by ID
+        if project_id:
+            entries = entries.filter(project__id=project_id)
         if status_filter:
             entries = entries.filter(daily_report__status=status_filter)
 
