@@ -23,11 +23,12 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 class MilestoneSerializer(serializers.ModelSerializer):
     project_name = serializers.CharField(source='project.name', read_only=True)
+    project_id = serializers.IntegerField(source='project.id', read_only=True)
 
     class Meta:
         model = Milestone
-        fields = ['id', 'project', 'project_name', 'name', 'is_active', 'created_at']
-        read_only_fields = ['id', 'project_name', 'created_at']
+        fields = ['id', 'project', 'project_id', 'project_name', 'name', 'is_active', 'created_at']
+        read_only_fields = ['id', 'project_id', 'project_name', 'created_at']
 
     def validate_name(self, value):
         return value.strip()

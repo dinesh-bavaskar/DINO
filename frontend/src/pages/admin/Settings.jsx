@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Power, Trash2, Settings as SettingsIcon } from 'lucide-react';
+import { Plus, Trash2, Settings as SettingsIcon } from 'lucide-react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import Navbar from '../../components/common/Navbar';
 import Loader from '../../components/common/Loader';
@@ -297,13 +297,13 @@ const Settings = () => {
               ) : (
                 <div className="divide-y divide-slate-100">
                   {projects.map((project) => {
-                    const projectMilestones = milestones.filter((m) => m.project_id === project.id);
+                    const projectMilestones = milestones.filter((m) => Number(m.project_id ?? m.project) === Number(project.id));
                     return (
-                      <div className="flex flex-col gap-3 px-4 py-3 hover:bg-slate-50 transition-colors" key={project.id}>
+                      <div className="flex flex-col gap-3 px-4 py-4 hover:bg-slate-50 transition-colors" key={project.id}>
                         {/* Main Row: Project Name | Milestones | Buttons */}
-                        <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-center justify-between gap-4">
                           {/* Project Name - Left */}
-                          <div className="flex-shrink-0">
+                          <div className="w-20 flex-shrink-0 sm:w-24">
                             <p className="text-sm font-semibold text-slate-950">{project.name}</p>
                             <p className={`text-xs font-medium ${project.is_active ? 'text-green-600' : 'text-slate-400'}`}>
                               {project.is_active ? 'Active' : 'Inactive'}
@@ -311,17 +311,17 @@ const Settings = () => {
                           </div>
 
                           {/* Milestones - Middle */}
-                          <div className="flex-1 min-w-0">
+                          <div className="flex min-h-9 flex-1 items-center min-w-0">
                             {projectMilestones.length > 0 ? (
-                              <div className="flex flex-wrap gap-2">
+                              <div className="flex flex-wrap items-center gap-2">
                                 {projectMilestones.map((milestone) => (
                                   <span
                                     key={milestone.id}
-                                    className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1.5 border border-green-200"
+                                    className="inline-flex h-9 items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-3"
                                   >
                                     <span className="text-xs font-medium text-green-700">{milestone.name}</span>
                                     <button
-                                      className="text-green-500 hover:text-green-700 font-bold text-sm leading-none"
+                                      className="flex h-4 w-4 items-center justify-center text-sm font-bold leading-none text-green-500 hover:text-green-700"
                                       id={`delete-milestone-${milestone.id}`}
                                       onClick={() => removeMilestone(milestone)}
                                       type="button"
