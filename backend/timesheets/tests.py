@@ -1,3 +1,4 @@
+from decimal import Decimal
 from datetime import time
 
 from django.contrib.auth.hashers import make_password
@@ -7,7 +8,7 @@ from rest_framework.test import APIClient
 
 from accounts.models import Employee
 from accounts.views import get_tokens_for_employee
-from .models import Project, Timesheet
+from .models import DailyReport, Milestone, Project, Timesheet
 
 
 class TimesheetApiTests(TestCase):
@@ -108,19 +109,25 @@ class TimesheetApiTests(TestCase):
         anon = APIClient()
         self.assertEqual(anon.get('/api/timesheets/today/').status_code, 401)
 
-        other_entry = Timesheet.objects.create(
+        other_project = Project.objects.create(name='Other', is_active=True)
+        other_milestone = Milestone.objects.create(project=other_project, name='Private', is_active=True)
+        other_report = DailyReport.objects.create(
             employee=self.other,
             date=timezone.localdate(),
-            project_name='Other',
-            milestone_name='Private',
+            status=DailyReport.STATUS_DRAFT
+        )
+        other_entry = Timesheet.objects.create(
+            daily_report=other_report,
+            project=other_project,
+            milestone=other_milestone,
             task_name='Hidden',
             task_type='Testing',
             planned_start=time(9, 0),
             planned_end=time(10, 0),
             actual_start=time(9, 0),
             actual_end=time(10, 0),
-            planned_hours='1.00',
-            actual_hours='1.00',
+            planned_hours=Decimal('1.00'),
+            actual_hours=Decimal('1.00'),
             remarks='Private',
         )
         self.assertEqual(self.client.delete(f'/api/timesheets/{other_entry.id}/').status_code, 404)

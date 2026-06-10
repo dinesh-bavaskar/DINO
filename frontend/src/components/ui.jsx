@@ -28,7 +28,7 @@ export const Field = ({ label, children }) => (
   </label>
 );
 
-export const TimePicker = ({ value, onChange, className }) => {
+export const TimePicker = ({ value, onChange, className, disabled }) => {
   const timeOptions = [];
   for (let h = 0; h < 24; h++) {
     for (let m = 0; m < 60; m += 15) {
@@ -76,6 +76,7 @@ export const TimePicker = ({ value, onChange, className }) => {
 
   return (
     <select
+      disabled={disabled}
       value={value || ''}
       onChange={(e) => onChange(e.target.value)}
       className={`bg-white border border-slate-200 shadow-sm px-2.5 py-1.5 rounded-md text-xs font-semibold text-slate-800 cursor-pointer outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 ${className}`}

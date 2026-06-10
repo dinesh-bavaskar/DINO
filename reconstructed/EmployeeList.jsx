@@ -16,6 +16,9 @@ import {
 import { buttonClass, inputClass } from '../../components/uiClasses';
 import { getEmployees, updateEmployeeStatus, updateEmployee } from '../../services/authService';
 
+const departments = ['Engineering', 'Marketing', 'Sales', 'HR', 'Finance', 'Operations', 'Design', 'Legal'];
+const designations = ['Software Engineer', 'Senior Engineer', 'Manager', 'Analyst', 'Designer', 'HR Executive', 'Accountant', 'Intern', 'Team Lead', 'Director'];
+
 const EmployeeList = () => {
   const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
@@ -38,18 +41,8 @@ const EmployeeList = () => {
   });
   const [editError, setEditError] = useState('');
   const [saving, setSaving] = useState(false);
-
-  const [departments] = useState(() => {
-    const saved = localStorage.getItem('system-other-settings');
-    const parsed = saved ? JSON.parse(saved) : null;
-    return parsed?.departments || ['Engineering', 'HR', 'Marketing', 'Sales', 'Finance'];
-  });
-
-  const [designations] = useState(() => {
-    const saved = localStorage.getItem('system-other-settings');
-    const parsed = saved ? JSON.parse(saved) : null;
-    return parsed?.designations || ['Software Engineer', 'Senior Engineer', 'HR Manager', 'Sales Executive', 'Product Manager'];
-  });
+  const [isEditCustomDept, setIsEditCustomDept] = useState(false);
+  const [isEditCustomDesig, setIsEditCustomDesig] = useState(false);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -87,6 +80,12 @@ const EmployeeList = () => {
   };
 
   const openEditModal = (emp) => {
+    const isDeptCustom = emp.department && !departments.includes(emp.department);
+    const isDesigCustom = emp.designation && !designations.includes(emp.designation);
+
+    setIsEditCustomDept(!!isDeptCustom);
+    setIsEditCustomDesig(!!isDesigCustom);
+
     setSelectedEmp(emp);
     setEditForm({
       employee_id: emp.employee_id,
@@ -289,34 +288,105 @@ const EmployeeList = () => {
                   value={editForm.email}
                 />
               </Field>
-              <Field label="Department">
-                <select
-                  className={inputClass}
-                  name="department"
-                  onChange={handleEditChange}
-                  required
-                  value={editForm.department}
-                >
-                  <option value="">Select Department</option>
-                  {departments.map((dept) => (
-                    <option key={dept} value={dept}>{dept}</option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Designation">
-                <select
-                  className={inputClass}
-                  name="designation"
-                  onChange={handleEditChange}
-                  required
-                  value={editForm.designation}
-                >
-                  <option value="">Select Designation</option>
-                  {designations.map((desg) => (
-                    <option key={desg} value={desg}>{desg}</option>
-                  ))}
-                </select>
-              </Field>
+              {!isEditCustomDept ? (
+                <Field label="Department">
+                  <select
+                    className={inputClass}
+                    name="department"
+                    onChange={(e) => {
+                      if (e.target.value === 'CUSTOM') {
+                        setIsEditCustomDept(true);
+                        setEditForm((prev) => ({ ...prev, department: '' }));
+                      } else {
+                        handleEditChange(e);
+                      }
+                    }}
+                    required
+                    value={editForm.department}
+                  >
+                    <option value="">Select Department</option>
+                    {departments.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                    <option value="CUSTOM">+ Add Custom Department</option>
+                  </select>
+                </Field>
+              ) : (
+                <Field label="Custom Department">
+                  <div className="flex gap-2">
+                    <input
+                      className={`${inputClass} flex-1`}
+                      name="department"
+                      onChange={handleEditChange}
+                      placeholder="Enter department name"
+                      required
+                      value={editForm.department}
+                    />
+                    <button
+                      className="text-xs text-blue-600 hover:text-blue-800 self-center whitespace-nowrap"
+                      onClick={() => {
+                        setIsEditCustomDept(false);
+                        setEditForm((prev) => ({ ...prev, department: '' }));
+                      }}
+                      type="button"
+                    >
+                      Select from list
+                    </button>
+                  </div>
+                </Field>
+              )}
+
+              {!isEditCustomDesig ? (
+                <Field label="Designation">
+                  <select
+                    className={inputClass}
+                    name="designation"
+                    onChange={(e) => {
+                      if (e.target.value === 'CUSTOM') {
+                        setIsEditCustomDesig(true);
+                        setEditForm((prev) => ({ ...prev, designation: '' }));
+                      } else {
+                        handleEditChange(e);
+                      }
+                    }}
+                    required
+                    value={editForm.designation}
+                  >
+                    <option value="">Select Designation</option>
+                    {designations.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                    <option value="CUSTOM">+ Add Custom Designation</option>
+                  </select>
+                </Field>
+              ) : (
+                <Field label="Custom Designation">
+                  <div className="flex gap-2">
+                    <input
+                      className={`${inputClass} flex-1`}
+                      name="designation"
+                      onChange={handleEditChange}
+                      placeholder="Enter designation name"
+                      required
+                      value={editForm.designation}
+                    />
+                    <button
+                      className="text-xs text-blue-600 hover:text-blue-800 self-center whitespace-nowrap"
+                      onClick={() => {
+                        setIsEditCustomDesig(false);
+                        setEditForm((prev) => ({ ...prev, designation: '' }));
+                      }}
+                      type="button"
+                    >
+                      Select from list
+                    </button>
+                  </div>
+                </Field>
+              )}
               <div className="hidden sm:block" />
               <Field label="New Password (optional)">
                 <input

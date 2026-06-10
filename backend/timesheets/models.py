@@ -37,6 +37,40 @@ class Milestone(models.Model):
         return f'{self.project.name} → {self.name}'
 
 
+class DailyReport(models.Model):
+    STATUS_DRAFT = 'draft'
+    STATUS_SUBMITTED = 'submitted'
+    STATUS_APPROVED = 'approved'
+    STATUS_REJECTED = 'rejected'
+
+    STATUS_CHOICES = (
+        (STATUS_DRAFT, 'Draft'),
+        (STATUS_SUBMITTED, 'Submitted'),
+        (STATUS_APPROVED, 'Approved'),
+        (STATUS_REJECTED, 'Rejected'),
+    )
+
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='daily_reports')
+    date = models.DateField()
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default=STATUS_DRAFT)
+    review_comments = models.TextField(blank=True)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-date']
+        unique_together = ('employee', 'date')
+        indexes = [
+            models.Index(fields=['employee', 'date']),
+            models.Index(fields=['status', 'date']),
+        ]
+
+    def __str__(self):
+        return f'{self.employee.employee_id} - {self.date} - {self.status}'
+
+
 class Timesheet(models.Model):
     STATUS_DRAFT = 'draft'
     STATUS_SUBMITTED = 'submitted'
@@ -61,10 +95,9 @@ class Timesheet(models.Model):
         ('Code Review', 'Code Review'),
     )
 
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='timesheets')
-    date = models.DateField()
-    project_name = models.CharField(max_length=120)
-    milestone_name = models.CharField(max_length=120)
+    daily_report = models.ForeignKey(DailyReport, on_delete=models.CASCADE, related_name='tasks')
+    project = models.ForeignKey(Project, on_delete=models.PROTECT, related_name='timesheets')
+    milestone = models.ForeignKey(Milestone, on_delete=models.PROTECT, related_name='timesheets', null=True, blank=True)
     task_name = models.CharField(max_length=160)
     task_type = models.CharField(max_length=30, choices=TASK_TYPE_CHOICES)
     planned_start = models.TimeField()
@@ -74,21 +107,23 @@ class Timesheet(models.Model):
     planned_hours = models.DecimalField(max_digits=4, decimal_places=2, default=Decimal('0.00'))
     actual_hours = models.DecimalField(max_digits=4, decimal_places=2, default=Decimal('0.00'))
     remarks = models.TextField()
-    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default=STATUS_DRAFT)
-    review_comments = models.TextField(blank=True)
-    submitted_at = models.DateTimeField(null=True, blank=True)
-    reviewed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-date', 'actual_start']
+        ordering = ['-daily_report__date', 'actual_start']
         indexes = [
-            models.Index(fields=['employee', 'date']),
-            models.Index(fields=['employee', 'status', 'date']),
-            models.Index(fields=['status', 'date']),
-            models.Index(fields=['project_name']),
+            models.Index(fields=['daily_report']),
+            models.Index(fields=['project']),
         ]
 
+    @property
+    def project_name(self):
+        return self.project.name if self.project else ''
+
+    @property
+    def milestone_name(self):
+        return self.milestone.name if self.milestone else ''
+
     def __str__(self):
-        return f'{self.employee.employee_id} - {self.date} - {self.task_name}'
+        return f'{self.daily_report.employee.employee_id} - {self.daily_report.date} - {self.task_name}'

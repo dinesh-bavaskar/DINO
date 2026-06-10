@@ -5,8 +5,7 @@ import {
   Building2,
   LayoutDashboard,
   LogOut,
-  Sunrise,
-  Sunset,
+  ClipboardList,
   User,
   ChevronLeft,
   ChevronRight,
@@ -14,8 +13,7 @@ import {
 
 const employeeLinks = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/employee/dashboard' },
-  { label: 'SOD',       icon: Sunrise,         path: '/employee/sod'       },
-  { label: 'EOD',       icon: Sunset,          path: '/employee/eod'       },
+  { label: 'Timesheet', icon: ClipboardList,   path: '/employee/timesheet' },
   { label: 'Profile',   icon: User,            path: '/employee/profile'   },
 ];
 

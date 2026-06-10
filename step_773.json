@@ -1,0 +1,21 @@
+{
+  "step_index": 800,
+  "source": "MODEL",
+  "type": "PLANNER_RESPONSE",
+  "status": "DONE",
+  "created_at": "2026-06-09T09:54:21Z",
+  "tool_calls": [
+    {
+      "name": "multi_replace_file_content",
+      "args": {
+        "ArtifactMetadata": "{\"ArtifactType\":\"other\",\"Summary\":\"Update routes in AppRoutes.jsx to render unified TodayTimesheet at /employee/timesheet, redirecting older sod and eod paths.\"}",
+        "Description": "\"Update routing structure in AppRoutes.jsx for employee timesheets.\"",
+        "Instruction": "\"Remove SODPage and EODPage imports, and modify routing logic to render TodayTimesheet for /employee/timesheet and redirect sod/eod.\"",
+        "ReplacementChunks": "[{\"AllowMultiple\":false,\"EndLine\":16,\"ReplacementContent\":\"import Profile from '../pages/employee/Profile';\\nimport EmployeeDashboard from '../pages/employee/Dashboard';\\nimport TodayTimesheet from '../pages/employee/TodayTimesheet';\\nimport EmployeeSubmissions from '../pages/admin/EmployeeSubmissions';\\nimport AdminSettings from '../pages/admin/Settings';\",\"StartLine\":10,\"TargetContent\":\"import Profile from '../pages/employee/Profile';\\nimport EmployeeDashboard from '../pages/employee/Dashboard';\\nimport TodayTimesheet from '../pages/employee/TodayTimesheet';\\nimport SODPage from '../pages/employee/SOD';\\nimport EODPage from '../pages/employee/EOD';\\nimport EmployeeSubmissions from '../pages/admin/EmployeeSubmissions';\\nimport AdminSettings from '../pages/admin/Settings';\"},{\"AllowMultiple\":false,\"EndLine\":103,\"ReplacementContent\":\"          <Route\\n            path=\\\"/employee/timesheet\\\"\\n            element={\\n              <EmployeeRoute>\\n                <TodayTimesheet />\\n              </EmployeeRoute>\\n            }\\n          />\\n          <Route path=\\\"/employee/sod\\\" element={<Navigate to=\\\"/employee/timesheet\\\" replace />} />\\n          <Route path=\\\"/employee/eod\\\" element={<Navigate to=\\\"/employee/timesheet\\\" replace />} />\\n          <Route path=\\\"/employee/add-work\\\" element={<Navigate to=\\\"/employee/timesheet\\\" replace />} />\\n          <Route path=\\\"/employee/today-timesheet\\\" element={<Navigate to=\\\"/employee/timesheet\\\" replace />} />\\n          <Route path=\\\"/employee/submissions\\\" element={<Navigate to=\\\"/employee/timesheet\\\" replace />} />\",\"StartLine\":84,\"TargetContent\":\"          <Route\\n            path=\\\"/employee/sod\\\"\\n            element={\\n              <EmployeeRoute>\\n                <SODPage />\\n              </EmployeeRoute>\\n            }\\n          />\\n          <Route\\n            path=\\\"/employee/eod\\\"\\n            element={\\n              <EmployeeRoute>\\n                <EODPage />\\n              </EmployeeRoute>\\n            }\\n          />\\n          <Route path=\\\"/empl\n<truncated 399 bytes>",
+        "TargetFile": "\"c:\\\\Users\\\\DINO\\\\Desktop\\\\DINO\\\\frontend\\\\src\\\\routes\\\\AppRoutes.jsx\"",
+        "toolAction": "\"Updating employee routes in AppRoutes.jsx\"",
+        "toolSummary": "\"Modify AppRoutes.jsx\""
+      }
+    }
+  ]
+}

@@ -5,7 +5,7 @@ from django.db.models import Sum
 from django.utils import timezone
 from rest_framework import serializers
 
-from .models import Milestone, Project, Timesheet
+from .models import DailyReport, Milestone, Project, Timesheet
 
 
 DAILY_HOUR_LIMIT = Decimal('8.00')
@@ -54,9 +54,16 @@ def calculate_hours(start, end):
 
 
 class TimesheetSerializer(serializers.ModelSerializer):
-    employee_id = serializers.CharField(source='employee.employee_id', read_only=True)
-    employee_name = serializers.CharField(source='employee.full_name', read_only=True)
-    employee_email = serializers.EmailField(source='employee.email', read_only=True)
+    employee_id = serializers.CharField(source='daily_report.employee.employee_id', read_only=True)
+    employee_name = serializers.CharField(source='daily_report.employee.full_name', read_only=True)
+    employee_email = serializers.EmailField(source='daily_report.employee.email', read_only=True)
+    date = serializers.DateField(source='daily_report.date', read_only=True)
+    status = serializers.CharField(source='daily_report.status', read_only=True)
+    review_comments = serializers.CharField(source='daily_report.review_comments', read_only=True)
+    submitted_at = serializers.DateTimeField(source='daily_report.submitted_at', read_only=True)
+    reviewed_at = serializers.DateTimeField(source='daily_report.reviewed_at', read_only=True)
+    project_name = serializers.CharField()
+    milestone_name = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
     class Meta:
         model = Timesheet
@@ -75,8 +82,35 @@ class TimesheetSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         employee = self.context['employee']
-        entry_date = timezone.localdate()
         instance = self.instance
+
+        if instance:
+            entry_date = instance.daily_report.date
+        else:
+            entry_date = timezone.localdate()
+
+        # Resolve project_name to Project instance
+        project_name = attrs.pop('project_name', '').strip()
+        if not project_name:
+            raise serializers.ValidationError({'project_name': 'Project name is required.'})
+        
+        project, _ = Project.objects.get_or_create(
+            name__iexact=project_name,
+            defaults={'name': project_name, 'is_active': True}
+        )
+        attrs['project'] = project
+
+        # Resolve milestone_name to Milestone instance
+        milestone_name = attrs.pop('milestone_name', '').strip()
+        if milestone_name:
+            milestone, _ = Milestone.objects.get_or_create(
+                project=project,
+                name__iexact=milestone_name,
+                defaults={'name': milestone_name, 'is_active': True}
+            )
+            attrs['milestone'] = milestone
+        else:
+            attrs['milestone'] = None
 
         planned_start = attrs.get('planned_start', instance.planned_start if instance else None)
         planned_end = attrs.get('planned_end', instance.planned_end if instance else None)
@@ -86,7 +120,15 @@ class TimesheetSerializer(serializers.ModelSerializer):
         planned_hours = calculate_hours(planned_start, planned_end)
         actual_hours = calculate_hours(actual_start, actual_end)
 
-        entries = Timesheet.objects.filter(employee=employee, date=entry_date)
+        # Retrieve/create DailyReport container
+        daily_report, _ = DailyReport.objects.get_or_create(
+            employee=employee,
+            date=entry_date,
+            defaults={'status': DailyReport.STATUS_DRAFT}
+        )
+        
+        # Check overlapping slots
+        entries = Timesheet.objects.filter(daily_report=daily_report)
         if instance:
             entries = entries.exclude(pk=instance.pk)
 
@@ -101,14 +143,13 @@ class TimesheetSerializer(serializers.ModelSerializer):
                 'actual_hours': 'Daily total actual hours must not exceed 8 hours.'
             })
 
-        attrs['date'] = entry_date
+        attrs['daily_report'] = daily_report
         attrs['planned_hours'] = planned_hours
         attrs['actual_hours'] = actual_hours
         return attrs
 
     def create(self, validated_data):
-        validated_data['employee'] = self.context['employee']
-        return super().create(validated_data)
+        return Timesheet.objects.create(**validated_data)
 
 
 class TimesheetSubmitSerializer(serializers.Serializer):

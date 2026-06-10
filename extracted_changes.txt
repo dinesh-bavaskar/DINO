@@ -1,0 +1,40 @@
+================================================================================
+TOOL: replace_file_content
+FILE: "c:\\Users\\DINO\\Desktop\\DINO\\frontend\\src\\pages\\admin\\Settings.jsx"
+DESCRIPTION: "Update addMilestone to read from the global __global__ key since the input was moved to the top card."
+START: 72 END: 86
+TARGET:
+"  // ── milestone CRUD ──────────────────────────────────────────\n  const addMilestone = async (project) => {\n    const name = (msInputs[project.id] || '').trim();\n    if (!name) return;\n    setMsAdding((p) => ({ ...p, [project.id]: true }));\n    setMilestoneError('');\n    try {\n      await createMilestone({ project: project.id, name, is_active: true });\n      setMsInputs((p) => ({ ...p, [project.id]: '' }));\n      loadMilestones();\n    } catch (err) {\n      const d = err.response?.data;\n      setMilestoneError(d?.name?.[0] || d?.non_field_errors?.[0] || d?.detail || 'Unable to add milestone.');\n    } finally { setMsAdding((p) => ({ ...p, [project.id]: false })); }\n  };\n"
+REPLACEMENT:
+"  // ── milestone CRUD ──────────────────────────────────────────\n  const addMilestone = async (project) => {\n    const name = (msInputs['__global__'] || '').trim();\n    if (!name) return;\n    setMsAdding((p) => ({ ...p, __global__: true }));\n    setMilestoneError('');\n    try {\n      await createMilestone({ project: project.id, name, is_active: true });\n      setMsInputs((p) => ({ ...p, __global__: '' }));\n      loadMilestones();\n    } catch (err) {\n      const d = err.response?.data;\n      setMilestoneError(d?.name?.[0] || d?.non_field_errors?.[0] || d?.detail || 'Unable to add milestone.');\n    } finally { setMsAdding((p) => ({ ...p, __global__: false })); }\n  };\n"
+
+================================================================================
+TOOL: replace_file_content
+FILE: "c:\\Users\\DINO\\Desktop\\DINO\\frontend\\src\\pages\\admin\\Settings.jsx"
+DESCRIPTION: "Add back the missing `milestoneProject` state variable."
+START: 22 END: 25
+TARGET:
+"  /* per-project milestone draft value */\n  const [msInputs, setMsInputs]   = useState({});   // { [projectId]: string }\n  const [msAdding, setMsAdding]   = useState({});   // { [projectId]: boolean }"
+REPLACEMENT:
+"  /* per-project milestone draft value */\n  const [msInputs, setMsInputs]   = useState({});   // { [projectId]: string }\n  const [msAdding, setMsAdding]   = useState({});   // { [projectId]: boolean }\n  const [milestoneProject, setMilestoneProject] = useState('');"
+
+================================================================================
+TOOL: replace_file_content
+FILE: "c:\\Users\\DINO\\Desktop\\DINO\\frontend\\src\\pages\\admin\\Settings.jsx"
+DESCRIPTION: "Replace the pill button with an iOS-style toggle switch that has ON/OFF text inside and a sliding circular handle."
+START: 237 END: 254
+TARGET:
+"                        {/* Active/Inactive toggle */}\n                        <td className=\"px-4 py-4 text-center\">\n                          <button\n                            type=\"button\"\n                            disabled={isToggling}\n                            onClick={() => toggleActive(project)}\n                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition border ${\n                              project.is_active\n                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'\n                                : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'\n                            } disabled:opacity-50`}\n                          >\n                            {project.is_active\n                              ? <><CheckCircle2 size={13} /> Active</>\n                              : <><XCircle size={13} /> Inactive</>\n                            }\n                          </button>\n                        </td>"
+REPLACEMENT:
+"                        {/* Active/Inactive toggle */}\n                        <td className=\"px-4 py-4 text-center\">\n                          <div className=\"flex justify-center\">\n                            <button\n                              type=\"button\"\n                              disabled={isToggling}\n                              onClick={() => toggleActive(project)}\n                              className={`relative inline-flex h-8 w-16 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed shadow-inner ${\n                                project.is_active ? 'bg-green-500' : 'bg-slate-300'\n                              }`}\n                            >\n                              <span\n                                className={`absolute text-[11px] font-bold tracking-wide transition-opacity duration-200 ${\n                                  project.is_active ? 'left-2 text-green-900/60' : 'right-2 text-slate-500'\n                                }`}\n                              >\n                                {project.is_active ? 'ON' : 'OFF'}\n                              </span>\n                              <span\n                                className={`relative inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${\n                                  project.is_active ? 'translate-x-8' : 'translate-x-0'\n                                }`}\n                              />\n                            </button>\n                          </div>\n                        </td>"
+
+================================================================================
+TOOL: replace_file_content
+FILE: "c:/Users/DINO/Desktop/DINO/frontend/src/pages/admin/Settings.jsx"
+DESCRIPTION: "Remove DialogDescription from Other Settings modal"
+START: 383 END: 392
+TARGET:
+"          <DialogHeader className=\"border-b border-slate-100 pb-3\">\n            <DialogTitle className=\"text-lg font-bold text-slate-900 flex items-center gap-2\">\n              <SettingsIcon className=\"text-blue-600\" size={20} />\n              Other Settings\n            </DialogTitle>\n            <DialogDescription className=\"text-xs text-slate-500\">\n              Configure employee registration fields (Roles, Departments, Designations).\n            </DialogDescription>\n          </DialogHeader>"
+REPLACEMENT:
+"          <DialogHeader className=\"border-b border-slate-100 pb-3\">\n            <DialogTitle className=\"text-lg font-bold text-slate-900 flex items-center gap-2\">\n              <SettingsIcon className=\"text-blue-600\" size={20} />\n              Other Settings\n            </DialogTitle>\n          </DialogHeader>"
+

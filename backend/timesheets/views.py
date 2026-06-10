@@ -179,14 +179,14 @@ class TodayTimesheetView(EmployeeOnlyMixin, APIView):
         employee, error = self.get_employee_or_response(request)
         if error:
             return error
-        entries = Timesheet.objects.filter(employee=employee, date=timezone.localdate())
+        entries = Timesheet.objects.filter(daily_report__employee=employee, daily_report__date=timezone.localdate())
         return Response(TimesheetSerializer(entries, many=True).data)
 
 
 class TimesheetDetailView(EmployeeOnlyMixin, APIView):
     def get_object(self, employee, pk):
         try:
-            return Timesheet.objects.get(pk=pk, employee=employee)
+            return Timesheet.objects.get(pk=pk, daily_report__employee=employee)
         except Timesheet.DoesNotExist:
             return None
 
@@ -220,7 +220,7 @@ class TimesheetSubmitView(EmployeeOnlyMixin, APIView):
         if error:
             return error
         try:
-            entry = Timesheet.objects.get(pk=pk, employee=employee)
+            entry = Timesheet.objects.get(pk=pk, daily_report__employee=employee)
         except Timesheet.DoesNotExist:
             return Response({'detail': 'Timesheet entry not found.'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -229,14 +229,16 @@ class TimesheetSubmitView(EmployeeOnlyMixin, APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         next_status = serializer.validated_data['status']
-        entry.status = next_status
-        if next_status == Timesheet.STATUS_SUBMITTED and not entry.submitted_at:
-            entry.submitted_at = timezone.now()
-        if next_status == Timesheet.STATUS_DRAFT:
-            entry.submitted_at = None
-            entry.reviewed_at = None
-            entry.review_comments = ''
-        entry.save(update_fields=['status', 'submitted_at', 'reviewed_at', 'review_comments', 'updated_at'])
+        report = entry.daily_report
+        report.status = next_status
+        if next_status == Timesheet.STATUS_SUBMITTED:
+            if not report.submitted_at:
+                report.submitted_at = timezone.now()
+        elif next_status == Timesheet.STATUS_DRAFT:
+            report.submitted_at = None
+            report.reviewed_at = None
+            report.review_comments = ''
+        report.save()
         return Response(TimesheetSerializer(entry).data)
 
 
@@ -245,7 +247,7 @@ class DashboardSummaryView(EmployeeOnlyMixin, APIView):
         employee, error = self.get_employee_or_response(request)
         if error:
             return error
-        entries = Timesheet.objects.filter(employee=employee, date=timezone.localdate())
+        entries = Timesheet.objects.filter(daily_report__employee=employee, daily_report__date=timezone.localdate())
         logged = entries.aggregate(total=Sum('actual_hours'))['total'] or Decimal('0.00')
         remaining = max(DAILY_HOUR_LIMIT - logged, Decimal('0.00'))
         return Response({
@@ -262,7 +264,7 @@ class AdminTimesheetListView(AdminOnlyMixin, APIView):
         if error:
             return error
 
-        entries = Timesheet.objects.select_related('employee').all().order_by('-date', '-updated_at')
+        entries = Timesheet.objects.select_related('daily_report__employee', 'project', 'milestone').all().order_by('-daily_report__date', '-updated_at')
         employee = request.query_params.get('employee')
         entry_date = request.query_params.get('date')
         project = request.query_params.get('project')
@@ -270,16 +272,16 @@ class AdminTimesheetListView(AdminOnlyMixin, APIView):
 
         if employee:
             entries = entries.filter(
-                Q(employee__employee_id__icontains=employee) |
-                Q(employee__full_name__icontains=employee) |
-                Q(employee__email__icontains=employee)
+                Q(daily_report__employee__employee_id__icontains=employee) |
+                Q(daily_report__employee__full_name__icontains=employee) |
+                Q(daily_report__employee__email__icontains=employee)
             )
         if entry_date:
-            entries = entries.filter(date=entry_date)
+            entries = entries.filter(daily_report__date=entry_date)
         if project:
-            entries = entries.filter(project_name__icontains=project)
+            entries = entries.filter(project__name__icontains=project)
         if status_filter:
-            entries = entries.filter(status=status_filter)
+            entries = entries.filter(daily_report__status=status_filter)
 
         return paginated_response(request, entries, TimesheetSerializer)
 
@@ -290,7 +292,7 @@ class AdminTimesheetDetailView(AdminOnlyMixin, APIView):
         if error:
             return error
         try:
-            entry = Timesheet.objects.select_related('employee').get(pk=pk)
+            entry = Timesheet.objects.select_related('daily_report__employee').get(pk=pk)
         except Timesheet.DoesNotExist:
             return Response({'detail': 'Timesheet entry not found.'}, status=status.HTTP_404_NOT_FOUND)
         return Response(TimesheetSerializer(entry).data)
@@ -302,7 +304,7 @@ class AdminTimesheetReviewView(AdminOnlyMixin, APIView):
         if error:
             return error
         try:
-            entry = Timesheet.objects.select_related('employee').get(pk=pk)
+            entry = Timesheet.objects.select_related('daily_report__employee').get(pk=pk)
         except Timesheet.DoesNotExist:
             return Response({'detail': 'Timesheet entry not found.'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -310,10 +312,11 @@ class AdminTimesheetReviewView(AdminOnlyMixin, APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        entry.status = serializer.validated_data['status']
-        entry.review_comments = serializer.validated_data.get('review_comments', '')
-        entry.reviewed_at = timezone.now()
-        if not entry.submitted_at:
-            entry.submitted_at = timezone.now()
-        entry.save(update_fields=['status', 'review_comments', 'reviewed_at', 'submitted_at', 'updated_at'])
+        report = entry.daily_report
+        report.status = serializer.validated_data['status']
+        report.review_comments = serializer.validated_data.get('review_comments', '')
+        report.reviewed_at = timezone.now()
+        if not report.submitted_at:
+            report.submitted_at = timezone.now()
+        report.save()
         return Response(TimesheetSerializer(entry).data)

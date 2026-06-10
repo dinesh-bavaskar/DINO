@@ -1,0 +1,25 @@
+{
+  "step_index": 804,
+  "source": "MODEL",
+  "type": "PLANNER_RESPONSE",
+  "status": "DONE",
+  "created_at": "2026-06-09T09:54:29Z",
+  "thinking": "**Revising Sidebar Links**\n\nI'm currently focused on streamlining the `EmployeeSidebar.jsx` component. My goal is to replace the separate \"SOD\" and \"EOD\" links with a single \"Timesheet\" link, aiming for a more concise navigation experience for the user. I've re-examined the code block from lines 1 to 21 in `frontend/src/components/common/EmployeeSidebar.jsx` to inform the changes.\n\n\n",
+  "tool_calls": [
+    {
+      "name": "replace_file_content",
+      "args": {
+        "AllowMultiple": "false",
+        "Description": "\"Update EmployeeSidebar links to show a single 'Timesheet' item instead of separate SOD/EOD.\"",
+        "EndLine": "21",
+        "Instruction": "\"Replace imports and employeeLinks array to use ClipboardList icon and /employee/timesheet route.\"",
+        "ReplacementContent": "\"import { useState } from 'react';\\nimport { useLocation, useNavigate } from 'react-router-dom';\\nimport { useAuth } from '../../context/AuthContext';\\nimport {\\n  Building2,\\n  LayoutDashboard,\\n  LogOut,\\n  ClipboardList,\\n  User,\\n  ChevronLeft,\\n  ChevronRight,\\n} from 'lucide-react';\\n\\nconst employeeLinks = [\\n  { label: 'Dashboard', icon: LayoutDashboard, path: '/employee/dashboard' },\\n  { label: 'Timesheet', icon: ClipboardList,   path: '/employee/timesheet' },\\n  { label: 'Profile',   icon: User,            path: '/employee/profile'   },\\n];\"",
+        "StartLine": "1",
+        "TargetContent": "\"import { useState } from 'react';\\nimport { useLocation, useNavigate } from 'react-router-dom';\\nimport { useAuth } from '../../context/AuthContext';\\nimport {\\n  Building2,\\n  LayoutDashboard,\\n  LogOut,\\n  Sunrise,\\n  Sunset,\\n  User,\\n  ChevronLeft,\\n  ChevronRight,\\n} from 'lucide-react';\\n\\nconst employeeLinks = [\\n  { label: 'Dashboard', icon: LayoutDashboard, path: '/employee/dashboard' },\\n  { label: 'SOD',       icon: Sunrise,         path: '/employee/sod'       },\\n  { label: 'EOD',       icon: Sunset,          path: '/employee/eod'       },\\n  { label: 'Profile',   icon: User,            path: '/employee/profile'   },\\n];\"",
+        "TargetFile": "\"c:\\\\Users\\\\DINO\\\\Desktop\\\\DINO\\\\frontend\\\\src\\\\components\\\\common\\\\EmployeeSidebar.jsx\"",
+        "toolAction": "\"Updating EmployeeSidebar navigation links\"",
+        "toolSummary": "\"Modify EmployeeSidebar.jsx\""
+      }
+    }
+  ]
+}

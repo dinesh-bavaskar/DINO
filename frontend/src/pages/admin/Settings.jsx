@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Settings as SettingsIcon } from 'lucide-react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import Navbar from '../../components/common/Navbar';
 import Loader from '../../components/common/Loader';
@@ -8,6 +8,12 @@ import {
   createProject, deleteProject, getAdminProjects,
   createMilestone, deleteMilestone, getAdminMilestones,
 } from '../../services/timesheetService';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '../../components/ui/dialog';
 
 const Settings = () => {
   // ── Projects ──────────────────────────────────────────────
@@ -24,6 +30,89 @@ const Settings = () => {
   const [loadingMilestones, setLoadingMilestones] = useState(true);
   const [savingMilestone, setSavingMilestone] = useState(false);
   const [milestoneError, setMilestoneError] = useState('');
+
+  // ── other settings state & persistence ──────────────────────
+  const [isOtherSettingsOpen, setIsOtherSettingsOpen] = useState(false);
+  const [otherSettings, setOtherSettings] = useState(() => {
+    const saved = localStorage.getItem('system-other-settings');
+    return saved ? JSON.parse(saved) : {
+      roles: ['Employee', 'Admin'],
+      departments: ['Engineering', 'HR', 'Marketing', 'Sales', 'Finance'],
+      designations: ['Software Engineer', 'Senior Engineer', 'HR Manager', 'Sales Executive', 'Product Manager'],
+    };
+  });
+
+  const [draftRoles, setDraftRoles] = useState([]);
+  const [draftDepartments, setDraftDepartments] = useState([]);
+  const [draftDesignations, setDraftDesignations] = useState([]);
+  const [newRole, setNewRole] = useState('');
+  const [newDept, setNewDept] = useState('');
+  const [newDesg, setNewDesg] = useState('');
+
+  const openOtherSettings = () => {
+    setDraftRoles(otherSettings.roles || ['Employee', 'Admin']);
+    setDraftDepartments(otherSettings.departments || ['Engineering', 'HR', 'Marketing', 'Sales', 'Finance']);
+    setDraftDesignations(otherSettings.designations || ['Software Engineer', 'Senior Engineer', 'HR Manager', 'Sales Executive', 'Product Manager']);
+    setNewRole('');
+    setNewDept('');
+    setNewDesg('');
+    setIsOtherSettingsOpen(true);
+  };
+
+  const handleSaveOtherSettings = (e) => {
+    e.preventDefault();
+    const updated = {
+      roles: draftRoles,
+      departments: draftDepartments,
+      designations: draftDesignations,
+    };
+    setOtherSettings(updated);
+    localStorage.setItem('system-other-settings', JSON.stringify(updated));
+    setIsOtherSettingsOpen(false);
+  };
+
+  const handleAddRole = () => {
+    const val = newRole.trim();
+    if (val && !draftRoles.some(r => r.toLowerCase() === val.toLowerCase())) {
+      setDraftRoles([...draftRoles, val]);
+      setNewRole('');
+    }
+  };
+
+  const handleRemoveRole = (role) => {
+    setDraftRoles(draftRoles.filter((r) => r !== role));
+  };
+
+  const handleAddDept = () => {
+    const val = newDept.trim();
+    if (val && !draftDepartments.some(d => d.toLowerCase() === val.toLowerCase())) {
+      setDraftDepartments([...draftDepartments, val]);
+      setNewDept('');
+    }
+  };
+
+  const handleRemoveDept = (dept) => {
+    setDraftDepartments(draftDepartments.filter((d) => d !== dept));
+  };
+
+  const handleAddDesg = () => {
+    const val = newDesg.trim();
+    if (val && !draftDesignations.some(d => d.toLowerCase() === val.toLowerCase())) {
+      setDraftDesignations([...draftDesignations, val]);
+      setNewDesg('');
+    }
+  };
+
+  const handleRemoveDesg = (desg) => {
+    setDraftDesignations(draftDesignations.filter((d) => d !== desg));
+  };
+
+  const handleInputKeyDown = (e, addFn) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addFn();
+    }
+  };
 
   // ── Data loaders ──────────────────────────────────────────
   const loadProjects = () => {
@@ -113,7 +202,17 @@ const Settings = () => {
     <DashboardLayout>
       <Navbar title="Settings" subtitle="Manage projects and milestones" />
       <main className="flex-1 overflow-auto bg-slate-50 p-4 md:p-7">
-        <div className="mx-auto max-w-6xl grid gap-6 md:grid-cols-2 items-start">
+        <div className="mx-auto max-w-6xl space-y-6">
+          <div className="flex justify-end">
+            <button
+              onClick={openOtherSettings}
+              className={`${buttonClass.outline} flex items-center gap-2 bg-white shadow-sm hover:bg-slate-50`}
+              type="button"
+            >
+              <SettingsIcon size={14} className="text-slate-500" /> Other Settings
+            </button>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2 items-start">
 
           {/* ── Project Settings ───────────────────────────────── */}
           <div className="space-y-4">
@@ -249,9 +348,145 @@ const Settings = () => {
           </div>
 
         </div>
-      </main>
-    </DashboardLayout>
-  );
+      </div>
+    </main>
+
+    <Dialog open={isOtherSettingsOpen} onOpenChange={setIsOtherSettingsOpen}>
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto bg-white">
+        <DialogHeader className="border-b border-slate-100 pb-3">
+          <DialogTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <SettingsIcon className="text-blue-600" size={20} />
+            Other Settings
+          </DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSaveOtherSettings} className="space-y-6 py-4">
+          <div className="grid gap-6 md:grid-cols-3">
+            {/* Roles Section */}
+            <div className="space-y-3">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Roles</label>
+              <div className="flex flex-wrap gap-1.5 p-2 rounded-lg border border-slate-200 bg-slate-50 min-h-[120px] max-h-[185px] overflow-y-auto align-content-start">
+                {draftRoles.map((role) => (
+                  <span key={role} className="inline-flex items-center gap-1 rounded bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
+                    {role}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveRole(role)}
+                      className="text-blue-500 hover:text-blue-700 font-bold ml-1 text-sm leading-none"
+                    >
+                      &times;
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-1.5">
+                <input
+                  className={`${inputClass} text-xs h-8`}
+                  placeholder="Add role..."
+                  value={newRole}
+                  onChange={(e) => setNewRole(e.target.value)}
+                  onKeyDown={(e) => handleInputKeyDown(e, handleAddRole)}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddRole}
+                  className={`${buttonClass.primary} h-8 text-xs px-2.5`}
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+
+            {/* Departments Section */}
+            <div className="space-y-3">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Departments</label>
+              <div className="flex flex-wrap gap-1.5 p-2 rounded-lg border border-slate-200 bg-slate-50 min-h-[120px] max-h-[185px] overflow-y-auto align-content-start">
+                {draftDepartments.map((dept) => (
+                  <span key={dept} className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                    {dept}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveDept(dept)}
+                      className="text-emerald-500 hover:text-emerald-700 font-bold ml-1 text-sm leading-none"
+                    >
+                      &times;
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-1.5">
+                <input
+                  className={`${inputClass} text-xs h-8`}
+                  placeholder="Add dept..."
+                  value={newDept}
+                  onChange={(e) => setNewDept(e.target.value)}
+                  onKeyDown={(e) => handleInputKeyDown(e, handleAddDept)}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddDept}
+                  className={`${buttonClass.primary} h-8 text-xs px-2.5`}
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+
+            {/* Designations Section */}
+            <div className="space-y-3">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Designations</label>
+              <div className="flex flex-wrap gap-1.5 p-2 rounded-lg border border-slate-200 bg-slate-50 min-h-[120px] max-h-[185px] overflow-y-auto align-content-start">
+                {draftDesignations.map((desg) => (
+                  <span key={desg} className="inline-flex items-center gap-1 rounded bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700">
+                    {desg}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveDesg(desg)}
+                      className="text-indigo-500 hover:text-indigo-700 font-bold ml-1 text-sm leading-none"
+                    >
+                      &times;
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-1.5">
+                <input
+                  className={`${inputClass} text-xs h-8`}
+                  placeholder="Add desg..."
+                  value={newDesg}
+                  onChange={(e) => setNewDesg(e.target.value)}
+                  onKeyDown={(e) => handleInputKeyDown(e, handleAddDesg)}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddDesg}
+                  className={`${buttonClass.primary} h-8 text-xs px-2.5`}
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
+            <button
+              className={buttonClass.outline}
+              onClick={() => setIsOtherSettingsOpen(false)}
+              type="button"
+            >
+              Cancel
+            </button>
+            <button
+              className={buttonClass.admin}
+              type="submit"
+            >
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  </DashboardLayout>
+);
 };
 
 export default Settings;
