@@ -59,6 +59,30 @@ const getErrorMessage = (data) => {
   return Object.values(data).flat().join(' ');
 };
 
+const findTimeOverlap = (tasks) => {
+  for (let i = 0; i < tasks.length; i++) {
+    for (let j = i + 1; j < tasks.length; j++) {
+      const t1 = tasks[i];
+      const t2 = tasks[j];
+
+      // 1. Check planned overlap
+      if (t1.planned_start && t1.planned_end && t2.planned_start && t2.planned_end) {
+        if (t1.planned_start < t2.planned_end && t2.planned_start < t1.planned_end) {
+          return true;
+        }
+      }
+
+      // 2. Check actual overlap
+      if (t1.actual_start && t1.actual_end && t2.actual_start && t2.actual_end) {
+        if (t1.actual_start < t2.actual_end && t2.actual_start < t1.actual_end) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+};
+
 /* ─── component ───────────────────────────────────────────────── */
 const TimesheetPage = () => {
   const [rows, setRows]                   = useState([emptyRow()]);
@@ -128,6 +152,17 @@ const TimesheetPage = () => {
 
   useEffect(() => { loadData(); }, []);
 
+  // Real-time validation for time overlaps
+  useEffect(() => {
+    if (findTimeOverlap(rows)) {
+      setError('Time overlap detected. Please adjust task timings before saving.');
+    } else {
+      setError((prev) =>
+        prev === 'Time overlap detected. Please adjust task timings before saving.' ? '' : prev
+      );
+    }
+  }, [rows]);
+
   /* ── row operations ──────────────────────────────────────── */
   const updateRow = (rowId, name, value) => {
     setError(''); setMessage('');
@@ -168,6 +203,11 @@ const TimesheetPage = () => {
   const validateRows = (isSubmit) => {
     if (rows.length === 0) {
       setError('No tasks to save.');
+      return false;
+    }
+
+    if (findTimeOverlap(rows)) {
+      setError('Time overlap detected. Please adjust task timings before saving.');
       return false;
     }
 

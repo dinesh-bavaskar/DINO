@@ -97,6 +97,15 @@ class TimesheetApiTests(TestCase):
             format='json'
         )
         self.assertEqual(overlap.status_code, 400)
+        self.assertIn('Time overlap detected. Please adjust task timings before saving.', str(overlap.data))
+
+        planned_overlap = self.client.post(
+            '/api/timesheets/',
+            self.payload(planned_start='09:00', planned_end='11:00'),
+            format='json'
+        )
+        self.assertEqual(planned_overlap.status_code, 400)
+        self.assertIn('Time overlap detected. Please adjust task timings before saving.', str(planned_overlap.data))
 
         over_limit = self.client.post(
             '/api/timesheets/',
@@ -152,7 +161,7 @@ class TimesheetApiTests(TestCase):
 
         detail = self.admin_client.get(f"/api/admin/timesheets/{created.data['id']}/")
         self.assertEqual(detail.status_code, 200)
-        self.assertEqual(detail.data['task_name'], 'Daily Log')
+        self.assertEqual(detail.data['tasks'][0]['task_name'], 'Daily Log')
 
     def test_admin_approve_and_reject_workflow(self):
         created = self.client.post('/api/timesheets/', self.payload(), format='json')
@@ -228,3 +237,31 @@ class TimesheetApiTests(TestCase):
 
         deleted = self.admin_client.delete(f'/api/admin/projects/{inactive.id}/')
         self.assertEqual(deleted.status_code, 204)
+
+    def test_admin_can_manage_milestones(self):
+        project = Project.objects.create(name='Milestone Project', is_active=True)
+        # Create milestone
+        created = self.admin_client.post('/api/admin/milestones/', {'project': project.id, 'name': 'Phase 1'}, format='json')
+        self.assertEqual(created.status_code, 201)
+        self.assertEqual(created.data['name'], 'Phase 1')
+        self.assertTrue(created.data['is_active'])
+
+        # Patch milestone status & name
+        updated = self.admin_client.patch(
+            f"/api/admin/milestones/{created.data['id']}/",
+            {'name': 'Phase 1 - Kickoff', 'is_active': False},
+            format='json'
+        )
+        self.assertEqual(updated.status_code, 200)
+        self.assertEqual(updated.data['name'], 'Phase 1 - Kickoff')
+        self.assertFalse(updated.data['is_active'])
+
+        # Check in DB
+        milestone = Milestone.objects.get(id=created.data['id'])
+        self.assertEqual(milestone.name, 'Phase 1 - Kickoff')
+        self.assertFalse(milestone.is_active)
+
+        # Delete milestone
+        deleted = self.admin_client.delete(f"/api/admin/milestones/{created.data['id']}/")
+        self.assertEqual(deleted.status_code, 204)
+        self.assertFalse(Milestone.objects.filter(id=created.data['id']).exists())

@@ -133,10 +133,15 @@ class TimesheetSerializer(serializers.ModelSerializer):
         if instance:
             entries = entries.exclude(pk=instance.pk)
 
-        if entries.filter(actual_start__lt=actual_end, actual_end__gt=actual_start).exists():
-            raise serializers.ValidationError({
-                'actual_start': 'Actual time overlaps with an existing work log.'
-            })
+        # Check planned overlap
+        if planned_start and planned_end:
+            if entries.filter(planned_start__lt=planned_end, planned_end__gt=planned_start).exists():
+                raise serializers.ValidationError('Time overlap detected. Please adjust task timings before saving.')
+
+        # Check actual overlap
+        if actual_start and actual_end:
+            if entries.filter(actual_start__lt=actual_end, actual_end__gt=actual_start).exists():
+                raise serializers.ValidationError('Time overlap detected. Please adjust task timings before saving.')
 
         current_total = entries.aggregate(total=Sum('actual_hours'))['total'] or Decimal('0.00')
         if current_total + actual_hours > DAILY_HOUR_LIMIT:
