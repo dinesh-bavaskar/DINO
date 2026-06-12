@@ -31,3 +31,5 @@ export const getAdminMilestones = (params = {}) => API.get('/admin/milestones/',
 export const createMilestone = (data) => API.post('/admin/milestones/', data);
 export const updateMilestone = (id, data) => API.patch(`/admin/milestones/${id}/`, data);
 export const deleteMilestone = (id) => API.delete(`/admin/milestones/${id}/`);
+export const getTimesheetSettings = () => API.get('/timesheet-settings/');
+export const updateTimesheetSettings = (data) => API.put('/admin/timesheet-settings/', data);

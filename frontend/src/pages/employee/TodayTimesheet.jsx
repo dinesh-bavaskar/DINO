@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Clock, Plus, Save, SendHorizontal, Trash2 } from 'lucide-react';
+import { Clock, Plus, Save, SendHorizontal, Trash2, Lock } from 'lucide-react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import Navbar from '../../components/common/Navbar';
 import Loader from '../../components/common/Loader';
@@ -14,6 +14,7 @@ import {
   getTodayTimesheets,
   setTimesheetSubmissionStatus,
   updateTimesheet,
+  getTimesheetSettings,
 } from '../../services/timesheetService';
 
 /* ─── helpers ─────────────────────────────────────────────────── */
@@ -85,23 +86,81 @@ const findTimeOverlap = (tasks) => {
 
 /* ─── component ───────────────────────────────────────────────── */
 const TimesheetPage = () => {
-  const [rows, setRows]                   = useState([emptyRow()]);
-  const [projects, setProjects]           = useState([]);
+  const [rows, setRows] = useState([emptyRow()]);
+  const [projects, setProjects] = useState([]);
   const [milestonesCache, setMilestonesCache] = useState({});
-  const [summary, setSummary]             = useState(null);
-  const [loading, setLoading]             = useState(true);
-  const [saving, setSaving]               = useState(false);
-  const [error, setError]                 = useState('');
-  const [message, setMessage]             = useState('');
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [settings, setSettings] = useState(null);
+
+  // Helper to check if a time is within the window
+  const isTimeInWindow = (time, start, end) => {
+    if (!time || !start || !end) return false;
+    const t = time.substring(0, 5);
+    const s = start.substring(0, 5);
+    const e = end.substring(0, 5);
+    if (s <= e) {
+      return t >= s && t <= e;
+    } else {
+      return t >= s || t <= e;
+    }
+  };
+
+  // Helper to format time to AM/PM for user-friendly display
+  const formatTimeAMPM = (timeStr) => {
+    if (!timeStr) return '';
+    const [hStr, mStr] = timeStr.split(':');
+    const h = parseInt(hStr, 10);
+    const m = parseInt(mStr, 10);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const displayH = h % 12 || 12;
+    const displayM = String(m).padStart(2, '0');
+    return `${displayH}:${displayM} ${ampm}`;
+  };
+
+  const currentLocalTime = useMemo(() => {
+    const now = new Date();
+    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  }, [rows]); // Re-evaluate when rows change or on mount
+
+  const isPlannedEditable = useMemo(() => {
+    if (!settings) return true;
+    return isTimeInWindow(currentLocalTime, settings.planned_start_time, settings.planned_end_time);
+  }, [settings, currentLocalTime]);
+
+  const isActualEditable = useMemo(() => {
+    if (!settings) return true;
+    return isTimeInWindow(currentLocalTime, settings.actual_start_time, settings.actual_end_time);
+  }, [settings, currentLocalTime]);
+
+  const windowNotice = useMemo(() => {
+    if (!settings) return '';
+    const plannedStr = `${formatTimeAMPM(settings.planned_start_time)} to ${formatTimeAMPM(settings.planned_end_time)}`;
+    const actualStr = `${formatTimeAMPM(settings.actual_start_time)} to ${formatTimeAMPM(settings.actual_end_time)}`;
+
+    if (!isPlannedEditable && !isActualEditable) {
+      return `Timesheet editing windows are closed. (Planned Window: ${plannedStr}, Actual Window: ${actualStr}).`;
+    }
+    if (!isPlannedEditable) {
+      return `Planned Time fields are read-only outside the Planned Window (${plannedStr}).`;
+    }
+    if (!isActualEditable) {
+      return `Actual Time fields are read-only outside the Actual Window (${actualStr}).`;
+    }
+    return '';
+  }, [settings, isPlannedEditable, isActualEditable]);
 
   /* Totals derived dynamically from the rows */
   const plannedTotal = useMemo(() =>
     rows.reduce((acc, row) => acc + toMinutes(calculateDuration(row.planned_start, row.planned_end)), 0)
-  , [rows]);
+    , [rows]);
 
   const actualTotal = useMemo(() =>
     rows.reduce((acc, row) => acc + toMinutes(calculateDuration(row.actual_start, row.actual_end)), 0)
-  , [rows]);
+    , [rows]);
 
   /* ── data loading ────────────────────────────────────────── */
   const fetchMilestonesForProject = (projectId) => {
@@ -113,11 +172,20 @@ const TimesheetPage = () => {
 
   const loadData = (showLoading = true) => {
     if (showLoading) setLoading(true);
-    return Promise.all([getTodayTimesheets(), getDashboardSummary(), getProjects()])
-      .then(([entriesRes, summaryRes, projectsRes]) => {
+    return Promise.all([
+      getTodayTimesheets(),
+      getDashboardSummary(),
+      getProjects(),
+      getTimesheetSettings().catch((e) => {
+        console.error("Failed to load time settings:", e);
+        return { data: { planned_start_time: '06:00:00', planned_end_time: '12:00:00', actual_start_time: '12:00:00', actual_end_time: '23:59:00' } };
+      })
+    ])
+      .then(([entriesRes, summaryRes, projectsRes, settingsRes]) => {
         const allEntries = entriesRes.data;
         setSummary(summaryRes.data);
         setProjects(projectsRes.data);
+        setSettings(settingsRes.data);
 
         // Pre-fetch milestones for existing entries' projects
         allEntries.forEach((e) => {
@@ -132,16 +200,16 @@ const TimesheetPage = () => {
         } else {
           setRows(
             allEntries.map((e) => ({
-              id:             e.id,
-              isExisting:     true,
-              project_name:   e.project_name,
+              id: e.id,
+              isExisting: true,
+              project_name: e.project_name,
               milestone_name: e.milestone_name,
-              task_name:      e.task_name,
-              planned_start:  e.planned_start ? e.planned_start.substring(0, 5) : '',
-              planned_end:    e.planned_end ? e.planned_end.substring(0, 5) : '',
-              actual_start:   e.actual_start ? e.actual_start.substring(0, 5) : '',
-              actual_end:     e.actual_end ? e.actual_end.substring(0, 5) : '',
-              status:         e.status,
+              task_name: e.task_name,
+              planned_start: e.planned_start ? e.planned_start.substring(0, 5) : '',
+              planned_end: e.planned_end ? e.planned_end.substring(0, 5) : '',
+              actual_start: e.actual_start ? e.actual_start.substring(0, 5) : '',
+              actual_end: e.actual_end ? e.actual_end.substring(0, 5) : '',
+              status: e.status,
             }))
           );
         }
@@ -214,7 +282,7 @@ const TimesheetPage = () => {
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
       const rowNum = i + 1;
-      
+
       if (!r.project_name) {
         setError(`Row ${rowNum}: Please select a project.`);
         return false;
@@ -274,15 +342,15 @@ const TimesheetPage = () => {
     try {
       for (const row of rows) {
         const payload = {
-          project_name:   row.project_name,
+          project_name: row.project_name,
           milestone_name: row.milestone_name,
-          task_name:      row.task_name,
-          task_type:      'Development',
-          planned_start:  row.planned_start,
-          planned_end:    row.planned_end,
-          actual_start:   row.actual_start || row.planned_start,
-          actual_end:     row.actual_end || row.planned_end,
-          remarks:        row.task_name,
+          task_name: row.task_name,
+          task_type: 'Development',
+          planned_start: row.planned_start,
+          planned_end: row.planned_end,
+          actual_start: row.actual_start || row.planned_start,
+          actual_end: row.actual_end || row.planned_end,
+          remarks: row.task_name,
         };
 
         if (row.isExisting) {
@@ -309,15 +377,15 @@ const TimesheetPage = () => {
       const savedIds = [];
       for (const row of rows) {
         const payload = {
-          project_name:   row.project_name,
+          project_name: row.project_name,
           milestone_name: row.milestone_name,
-          task_name:      row.task_name,
-          task_type:      'Development',
-          planned_start:  row.planned_start,
-          planned_end:    row.planned_end,
-          actual_start:   row.actual_start,
-          actual_end:     row.actual_end,
-          remarks:        row.task_name,
+          task_name: row.task_name,
+          task_type: 'Development',
+          planned_start: row.planned_start,
+          planned_end: row.planned_end,
+          actual_start: row.actual_start,
+          actual_end: row.actual_end,
+          remarks: row.task_name,
         };
 
         if (row.isExisting) {
@@ -360,12 +428,14 @@ const TimesheetPage = () => {
             {/* ── Summary strip ── */}
             <div className="flex divide-x divide-slate-200 rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
               {[
-                { label: 'Logged Today',    value: `${summary?.logged_hours ?? 0}h`    },
-                { label: 'Remaining',        value: `${summary?.remaining_hours ?? 0}h` },
-                { label: 'Tasks',            value: summary?.total_tasks ?? 0           },
-                { label: 'Date',             value: summary?.current_date
+                { label: 'Logged Today', value: `${summary?.logged_hours ?? 0}h` },
+                { label: 'Remaining', value: `${summary?.remaining_hours ?? 0}h` },
+                { label: 'Tasks', value: summary?.total_tasks ?? 0 },
+                {
+                  label: 'Date', value: summary?.current_date
                     ? new Date(summary.current_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-                    : '—' },
+                    : '—'
+                },
               ].map(({ label, value }) => (
                 <div key={label} className="flex-1 min-w-0 px-5 py-4">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
@@ -375,13 +445,14 @@ const TimesheetPage = () => {
             </div>
 
             {/* ── Alert ── */}
-            {(error || message) && (
-              <div className={`rounded-lg border px-4 py-3 text-sm font-medium ${
-                error
-                  ? 'border-red-200 bg-red-50 text-red-700'
+            {(error || message || windowNotice) && (
+              <div className={`rounded-lg border px-4 py-3 text-sm font-medium ${error
+                ? 'border-red-200 bg-red-50 text-red-700'
+                : windowNotice
+                  ? 'border-amber-200 bg-amber-50 text-amber-700'
                   : 'border-blue-200 bg-blue-50 text-blue-700'
-              }`}>
-                {error || message}
+                }`}>
+                {error || message || windowNotice}
               </div>
             )}
 
@@ -424,17 +495,41 @@ const TimesheetPage = () => {
                         <th className="border-r border-slate-200 px-3 py-2 text-xs font-bold text-slate-700" rowSpan={2}>Project</th>
                         <th className="border-r border-slate-200 px-3 py-2 text-xs font-bold text-slate-700" rowSpan={2}>Milestone</th>
                         <th className="border-r border-slate-200 px-3 py-2 text-xs font-bold text-slate-700" rowSpan={2}>Task Description</th>
-                        <th className="border-r border-slate-200 px-2 py-1.5 text-center text-xs font-bold text-slate-700 bg-blue-50/50 text-blue-800" colSpan={3}>Planned Time</th>
-                        <th className="border-r border-slate-200 px-2 py-1.5 text-center text-xs font-bold text-slate-700 bg-orange-50/50 text-orange-800" colSpan={3}>Actual Time</th>
+                        <th className={`relative border-r border-slate-200 px-2 py-1.5 text-center text-xs font-bold text-blue-800 bg-blue-50/50 ${!isPlannedEditable ? 'opacity-80 bg-slate-100/70' : ''}`} colSpan={3}>
+                          <div className="flex items-center justify-center gap-1.5">
+                            Planned Time
+                            {!isPlannedEditable && (
+                              <div className="inline-flex items-center justify-center bg-red-50 border border-red-200 text-red-600 rounded p-0.5 cursor-help group relative ml-1 shadow-sm">
+                                <Lock size={12} className="stroke-[2.5]" />
+                                <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[11px] rounded-lg px-2.5 py-1 whitespace-nowrap z-50 shadow-lg border border-slate-700 font-normal normal-case tracking-normal">
+                                  Planned Time Window Closed
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </th>
+                        <th className={`relative border-r border-slate-200 px-2 py-1.5 text-center text-xs font-bold text-orange-800 bg-orange-50/50 ${!isActualEditable ? 'opacity-80 bg-slate-100/70' : ''}`} colSpan={3}>
+                          <div className="flex items-center justify-center gap-1.5">
+                            Actual Time
+                            {!isActualEditable && (
+                              <div className="inline-flex items-center justify-center bg-red-50 border border-red-200 text-red-600 rounded p-0.5 cursor-help group relative ml-1 shadow-sm">
+                                <Lock size={12} className="stroke-[2.5]" />
+                                <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[11px] rounded-lg px-2.5 py-1 whitespace-nowrap z-50 shadow-lg border border-slate-700 font-normal normal-case tracking-normal">
+                                  Actual Time Window Closed
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </th>
                         <th className="px-1 py-2" rowSpan={2} />
                       </tr>
                       <tr className="bg-slate-50 border-b border-slate-200">
-                        <th className="border-r border-slate-200 px-2 py-1 text-center text-[10px] font-bold text-slate-500 bg-blue-50/20">From</th>
-                        <th className="border-r border-slate-200 px-2 py-1 text-center text-[10px] font-bold text-slate-500 bg-blue-50/20">To</th>
-                        <th className="border-r border-slate-200 px-2 py-1 text-center text-[10px] font-bold text-slate-500 bg-blue-50/20">Dur</th>
-                        <th className="border-r border-slate-200 px-2 py-1 text-center text-[10px] font-bold text-slate-500 bg-orange-50/20">From</th>
-                        <th className="border-r border-slate-200 px-2 py-1 text-center text-[10px] font-bold text-slate-500 bg-orange-50/20">To</th>
-                        <th className="border-r border-slate-200 px-2 py-1 text-center text-[10px] font-bold text-slate-500 bg-orange-50/20">Dur</th>
+                        <th className={`border-r border-slate-200 px-2 py-1 text-center text-[10px] font-bold text-slate-500 bg-blue-50/20 ${!isPlannedEditable ? 'opacity-60 bg-slate-50/50 blur-[0.5px]' : ''}`}>From</th>
+                        <th className={`border-r border-slate-200 px-2 py-1 text-center text-[10px] font-bold text-slate-500 bg-blue-50/20 ${!isPlannedEditable ? 'opacity-60 bg-slate-50/50 blur-[0.5px]' : ''}`}>To</th>
+                        <th className={`border-r border-slate-200 px-2 py-1 text-center text-[10px] font-bold text-slate-500 bg-blue-50/20 ${!isPlannedEditable ? 'opacity-60 bg-slate-50/50 blur-[0.5px]' : ''}`}>Dur</th>
+                        <th className={`border-r border-slate-200 px-2 py-1 text-center text-[10px] font-bold text-slate-500 bg-orange-50/20 ${!isActualEditable ? 'opacity-60 bg-slate-50/50 blur-[0.5px]' : ''}`}>From</th>
+                        <th className={`border-r border-slate-200 px-2 py-1 text-center text-[10px] font-bold text-slate-500 bg-orange-50/20 ${!isActualEditable ? 'opacity-60 bg-slate-50/50 blur-[0.5px]' : ''}`}>To</th>
+                        <th className={`border-r border-slate-200 px-2 py-1 text-center text-[10px] font-bold text-slate-500 bg-orange-50/20 ${!isActualEditable ? 'opacity-60 bg-slate-50/50 blur-[0.5px]' : ''}`}>Dur</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -496,9 +591,9 @@ const TimesheetPage = () => {
                             </td>
 
                             {/* Planned From */}
-                            <td className="border-r border-slate-200 p-1">
+                            <td className={`border-r border-slate-200 p-1 ${!isPlannedEditable ? 'opacity-60 bg-slate-50/50 blur-[1px] pointer-events-none' : ''}`}>
                               <TimePicker
-                                disabled={isReadOnly}
+                                disabled={isReadOnly || !isPlannedEditable}
                                 className="w-full border-slate-200 focus:border-blue-400"
                                 value={row.planned_start}
                                 onChange={(val) => updateRow(row.id, 'planned_start', val)}
@@ -506,9 +601,9 @@ const TimesheetPage = () => {
                             </td>
 
                             {/* Planned To */}
-                            <td className="border-r border-slate-200 p-1">
+                            <td className={`border-r border-slate-200 p-1 ${!isPlannedEditable ? 'opacity-60 bg-slate-50/50 blur-[1px] pointer-events-none' : ''}`}>
                               <TimePicker
-                                disabled={isReadOnly}
+                                disabled={isReadOnly || !isPlannedEditable}
                                 className="w-full border-slate-200 focus:border-blue-400"
                                 value={row.planned_end}
                                 onChange={(val) => updateRow(row.id, 'planned_end', val)}
@@ -516,14 +611,14 @@ const TimesheetPage = () => {
                             </td>
 
                             {/* Planned Dur */}
-                            <td className="border-r border-slate-200 px-2 py-2 text-center text-xs font-bold text-blue-700">
+                            <td className={`border-r border-slate-200 px-2 py-2 text-center text-xs font-bold text-blue-700 ${!isPlannedEditable ? 'opacity-60 bg-slate-50/50 blur-[1px]' : ''}`}>
                               {calculateDuration(row.planned_start, row.planned_end)}
                             </td>
 
                             {/* Actual From */}
-                            <td className="border-r border-slate-200 p-1">
+                            <td className={`border-r border-slate-200 p-1 ${!isActualEditable ? 'opacity-60 bg-slate-50/50 blur-[1px] pointer-events-none' : ''}`}>
                               <TimePicker
-                                disabled={isReadOnly}
+                                disabled={isReadOnly || !isActualEditable}
                                 className="w-full border-slate-200 focus:border-orange-400"
                                 value={row.actual_start}
                                 onChange={(val) => updateRow(row.id, 'actual_start', val)}
@@ -531,9 +626,9 @@ const TimesheetPage = () => {
                             </td>
 
                             {/* Actual To */}
-                            <td className="border-r border-slate-200 p-1">
+                            <td className={`border-r border-slate-200 p-1 ${!isActualEditable ? 'opacity-60 bg-slate-50/50 blur-[1px] pointer-events-none' : ''}`}>
                               <TimePicker
-                                disabled={isReadOnly}
+                                disabled={isReadOnly || !isActualEditable}
                                 className="w-full border-slate-200 focus:border-orange-400"
                                 value={row.actual_end}
                                 onChange={(val) => updateRow(row.id, 'actual_end', val)}
@@ -541,7 +636,7 @@ const TimesheetPage = () => {
                             </td>
 
                             {/* Actual Dur */}
-                            <td className="border-r border-slate-200 px-2 py-2 text-center text-xs font-bold text-orange-600">
+                            <td className={`border-r border-slate-200 px-2 py-2 text-center text-xs font-bold text-orange-600 ${!isActualEditable ? 'opacity-60 bg-slate-50/50 blur-[1px]' : ''}`}>
                               {calculateDuration(row.actual_start, row.actual_end)}
                             </td>
 

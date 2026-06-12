@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.models import Employee
-from .models import DailyReport, Milestone, Project, Timesheet
+from .models import DailyReport, Milestone, Project, Timesheet, TimesheetSetting
 from .serializers import (
     DAILY_HOUR_LIMIT,
     DailyReportSerializer,
@@ -18,6 +18,7 @@ from .serializers import (
     TimesheetReviewSerializer,
     TimesheetSerializer,
     TimesheetSubmitSerializer,
+    TimesheetSettingSerializer,
 )
 
 
@@ -196,7 +197,7 @@ class TimesheetListCreateView(EmployeeOnlyMixin, APIView):
         employee, error = self.get_employee_or_response(request)
         if error:
             return error
-        serializer = TimesheetSerializer(data=request.data, context={'employee': employee})
+        serializer = TimesheetSerializer(data=request.data, context={'employee': employee, 'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -226,7 +227,7 @@ class TimesheetDetailView(EmployeeOnlyMixin, APIView):
         entry = self.get_object(employee, pk)
         if not entry:
             return Response({'detail': 'Timesheet entry not found.'}, status=status.HTTP_404_NOT_FOUND)
-        serializer = TimesheetSerializer(entry, data=request.data, context={'employee': employee})
+        serializer = TimesheetSerializer(entry, data=request.data, context={'employee': employee, 'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -374,7 +375,7 @@ class AdminTimesheetDetailView(AdminOnlyMixin, APIView):
             except Timesheet.DoesNotExist:
                 return Response({'detail': f'Task with id {task_id} not found in this report.'}, status=status.HTTP_400_BAD_REQUEST)
             
-            serializer = TimesheetSerializer(task, data=task_data, context={'employee': report.employee}, partial=True)
+            serializer = TimesheetSerializer(task, data=task_data, context={'employee': report.employee, 'request': request}, partial=True)
             if not serializer.is_valid():
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             serializer.save()
@@ -414,3 +415,25 @@ class AdminTimesheetReviewView(AdminOnlyMixin, APIView):
             report.submitted_at = timezone.now()
         report.save()
         return Response(DailyReportSerializer(report).data)
+
+
+class TimesheetSettingView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        settings = TimesheetSetting.get_settings()
+        serializer = TimesheetSettingSerializer(settings)
+        return Response(serializer.data)
+
+
+class AdminTimesheetSettingView(AdminOnlyMixin, APIView):
+    def put(self, request):
+        error = self.get_admin_error(request)
+        if error:
+            return error
+        settings = TimesheetSetting.get_settings()
+        serializer = TimesheetSettingSerializer(settings, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

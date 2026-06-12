@@ -127,3 +127,30 @@ class Timesheet(models.Model):
 
     def __str__(self):
         return f'{self.daily_report.employee.employee_id} - {self.daily_report.date} - {self.task_name}'
+
+
+class TimesheetSetting(models.Model):
+    planned_start_time = models.TimeField(default="06:00:00")
+    planned_end_time = models.TimeField(default="12:00:00")
+    actual_start_time = models.TimeField(default="12:00:00")
+    actual_end_time = models.TimeField(default="23:59:00")
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_settings(cls):
+        obj, created = cls.objects.get_or_create(
+            pk=1,
+            defaults={
+                'planned_start_time': '06:00:00',
+                'planned_end_time': '12:00:00',
+                'actual_start_time': '12:00:00',
+                'actual_end_time': '23:59:00',
+            }
+        )
+        return obj
+
+    def __str__(self):
+        return f"Planned: {self.planned_start_time}-{self.planned_end_time}, Actual: {self.actual_start_time}-{self.actual_end_time}"

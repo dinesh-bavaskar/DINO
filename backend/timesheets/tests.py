@@ -265,3 +265,55 @@ class TimesheetApiTests(TestCase):
         deleted = self.admin_client.delete(f"/api/admin/milestones/{created.data['id']}/")
         self.assertEqual(deleted.status_code, 204)
         self.assertFalse(Milestone.objects.filter(id=created.data['id']).exists())
+
+    def test_timesheet_time_window_settings(self):
+        from django.conf import settings as django_settings
+        from .models import TimesheetSetting
+
+        # 1. GET /api/timesheet-settings/ as employee (should return defaults)
+        resp = self.client.get('/api/timesheet-settings/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data['planned_start_time'], '06:00:00')
+        self.assertEqual(resp.data['planned_end_time'], '12:00:00')
+        self.assertEqual(resp.data['actual_start_time'], '12:00:00')
+        self.assertEqual(resp.data['actual_end_time'], '23:59:00')
+
+        # 2. PUT /api/admin/timesheet-settings/ as employee (should be 403 forbidden)
+        resp = self.client.put('/api/admin/timesheet-settings/', {
+            'planned_start_time': '08:00:00'
+        }, format='json')
+        self.assertEqual(resp.status_code, 403)
+
+        # 3. PUT /api/admin/timesheet-settings/ as admin (should succeed)
+        resp = self.admin_client.put('/api/admin/timesheet-settings/', {
+            'planned_start_time': '07:00:00',
+            'planned_end_time': '11:00:00',
+            'actual_start_time': '11:00:00',
+            'actual_end_time': '20:00:00',
+        }, format='json')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data['planned_start_time'], '07:00:00')
+        self.assertEqual(resp.data['planned_end_time'], '11:00:00')
+        self.assertEqual(resp.data['actual_start_time'], '11:00:00')
+        self.assertEqual(resp.data['actual_end_time'], '20:00:00')
+
+        # 4. Enforce validation during tests and check window behavior
+        django_settings.FORCE_TIME_WINDOW_VALIDATION = True
+        try:
+            # Mock current time to be 21:00 (outside actual window 11:00-20:00, outside planned window 07:00-11:00)
+            from unittest.mock import patch
+            import datetime
+            
+            with patch('django.utils.timezone.localtime') as mock_localtime:
+                # Mock localtime to return a datetime with time 21:00
+                from django.utils import timezone
+                dt = timezone.now().replace(hour=21, minute=0, second=0)
+                mock_localtime.return_value = dt
+
+                # Try creating task - should fail because 21:00 is outside planned window
+                fail_resp = self.client.post('/api/timesheets/', self.payload(), format='json')
+                self.assertEqual(fail_resp.status_code, 400)
+                self.assertIn('Planned Time fields can only be edited during the Planned Time Window', str(fail_resp.data))
+
+        finally:
+            django_settings.FORCE_TIME_WINDOW_VALIDATION = False

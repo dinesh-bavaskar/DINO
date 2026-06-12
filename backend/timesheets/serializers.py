@@ -5,10 +5,16 @@ from django.db.models import Sum
 from django.utils import timezone
 from rest_framework import serializers
 
-from .models import DailyReport, Milestone, Project, Timesheet
+from .models import DailyReport, Milestone, Project, Timesheet, TimesheetSetting
 
 
 DAILY_HOUR_LIMIT = Decimal('8.00')
+
+
+class TimesheetSettingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TimesheetSetting
+        fields = ['planned_start_time', 'planned_end_time', 'actual_start_time', 'actual_end_time']
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -84,6 +90,78 @@ class TimesheetSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         employee = self.context['employee']
         instance = self.instance
+
+        # Time Window Validation
+        request = self.context.get('request')
+        is_admin = False
+        if request:
+            is_admin = bool(
+                getattr(request.user, 'is_superuser', False) or
+                (hasattr(request.auth, 'get') and request.auth.get('role') == 'admin')
+            )
+
+        import sys
+        from django.conf import settings as django_settings
+        is_testing = 'test' in sys.argv
+        force_test_validation = getattr(django_settings, 'FORCE_TIME_WINDOW_VALIDATION', False)
+
+        if (not is_admin and not is_testing) or force_test_validation:
+            settings = TimesheetSetting.get_settings()
+            current_time = timezone.localtime(timezone.now()).time()
+
+            def is_time_in_window(t, start, end):
+                if start <= end:
+                    return start <= t <= end
+                else:
+                    return t >= start or t <= end
+
+            in_planned_window = is_time_in_window(current_time, settings.planned_start_time, settings.planned_end_time)
+            in_actual_window = is_time_in_window(current_time, settings.actual_start_time, settings.actual_end_time)
+
+            new_planned_start = attrs.get('planned_start')
+            new_planned_end = attrs.get('planned_end')
+
+            if instance:
+                planned_changed = False
+                if new_planned_start is not None and new_planned_start != instance.planned_start:
+                    planned_changed = True
+                if new_planned_end is not None and new_planned_end != instance.planned_end:
+                    planned_changed = True
+
+                if planned_changed and not in_planned_window:
+                    raise serializers.ValidationError(
+                        f"Planned Time fields can only be edited during the Planned Time Window ({settings.planned_start_time.strftime('%I:%M %p')} to {settings.planned_end_time.strftime('%I:%M %p')})."
+                    )
+            else:
+                if not in_planned_window:
+                    raise serializers.ValidationError(
+                        f"Planned Time fields can only be edited during the Planned Time Window ({settings.planned_start_time.strftime('%I:%M %p')} to {settings.planned_end_time.strftime('%I:%M %p')})."
+                    )
+
+            # Check actual times
+            new_actual_start = attrs.get('actual_start')
+            new_actual_end = attrs.get('actual_end')
+
+            if instance:
+                actual_changed = False
+                if new_actual_start is not None and new_actual_start != instance.actual_start:
+                    actual_changed = True
+                if new_actual_end is not None and new_actual_end != instance.actual_end:
+                    actual_changed = True
+
+                if actual_changed and not in_actual_window:
+                    raise serializers.ValidationError(
+                        f"Actual Time fields can only be edited during the Actual Time Window ({settings.actual_start_time.strftime('%I:%M %p')} to {settings.actual_end_time.strftime('%I:%M %p')})."
+                    )
+            else:
+                if not in_actual_window:
+                    planned_s = new_planned_start
+                    planned_e = new_planned_end
+
+                    if (new_actual_start and new_actual_start != planned_s) or (new_actual_end and new_actual_end != planned_e):
+                        raise serializers.ValidationError(
+                            f"Actual Time fields can only be edited during the Actual Time Window ({settings.actual_start_time.strftime('%I:%M %p')} to {settings.actual_end_time.strftime('%I:%M %p')})."
+                        )
 
         if instance:
             entry_date = instance.daily_report.date

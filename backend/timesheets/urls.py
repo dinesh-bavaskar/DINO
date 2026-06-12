@@ -15,6 +15,8 @@ from .views import (
     TimesheetListCreateView,
     TimesheetSubmitView,
     TodayTimesheetView,
+    TimesheetSettingView,
+    AdminTimesheetSettingView,
 )
 
 urlpatterns = [
@@ -32,4 +34,6 @@ urlpatterns = [
     path('admin/timesheets/<int:pk>/', AdminTimesheetDetailView.as_view(), name='admin-timesheet-detail'),
     path('admin/timesheets/<int:pk>/review/', AdminTimesheetReviewView.as_view(), name='admin-timesheet-review'),
     path('dashboard-summary/', DashboardSummaryView.as_view(), name='dashboard-summary'),
+    path('timesheet-settings/', TimesheetSettingView.as_view(), name='timesheet-settings'),
+    path('admin/timesheet-settings/', AdminTimesheetSettingView.as_view(), name='admin-timesheet-settings'),
 ]
