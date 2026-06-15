@@ -87,6 +87,7 @@ const findTimeOverlap = (tasks) => {
 /* ─── component ───────────────────────────────────────────────── */
 const TimesheetPage = () => {
   const [rows, setRows] = useState([emptyRow()]);
+  const [savedTasks, setSavedTasks] = useState([]);
   const [projects, setProjects] = useState([]);
   const [milestonesCache, setMilestonesCache] = useState({});
   const [summary, setSummary] = useState(null);
@@ -142,13 +143,13 @@ const TimesheetPage = () => {
     const actualStr = `${formatTimeAMPM(settings.actual_start_time)} to ${formatTimeAMPM(settings.actual_end_time)}`;
 
     if (!isPlannedEditable && !isActualEditable) {
-      return `Timesheet editing windows are closed. (Planned Window: ${plannedStr}, Actual Window: ${actualStr}).`;
+      return `Please note: Timesheet editing windows are closed. (Planned Window: ${plannedStr}, Actual Window: ${actualStr}).`;
     }
     if (!isPlannedEditable) {
-      return `Planned Time fields are read-only outside the Planned Window (${plannedStr}).`;
+      return `Please note: Planned Time fields can only be edited between ${plannedStr}.`;
     }
     if (!isActualEditable) {
-      return `Actual Time fields are read-only outside the Actual Window (${actualStr}).`;
+      return `Please note: Actual Time fields can only be edited between ${actualStr}.`;
     }
     return '';
   }, [settings, isPlannedEditable, isActualEditable]);
@@ -195,23 +196,25 @@ const TimesheetPage = () => {
           }
         });
 
-        if (allEntries.length === 0) {
-          setRows([emptyRow()]);
+        const mapped = allEntries.map((e) => ({
+          id: e.id,
+          isExisting: true,
+          project_name: e.project_name,
+          milestone_name: e.milestone_name,
+          task_name: e.task_name,
+          planned_start: e.planned_start ? e.planned_start.substring(0, 5) : '',
+          planned_end: e.planned_end ? e.planned_end.substring(0, 5) : '',
+          actual_start: e.actual_start ? e.actual_start.substring(0, 5) : '',
+          actual_end: e.actual_end ? e.actual_end.substring(0, 5) : '',
+          status: e.status,
+        }));
+
+        if (mapped.length > 0) {
+          setRows(mapped);
+          setSavedTasks(mapped);
         } else {
-          setRows(
-            allEntries.map((e) => ({
-              id: e.id,
-              isExisting: true,
-              project_name: e.project_name,
-              milestone_name: e.milestone_name,
-              task_name: e.task_name,
-              planned_start: e.planned_start ? e.planned_start.substring(0, 5) : '',
-              planned_end: e.planned_end ? e.planned_end.substring(0, 5) : '',
-              actual_start: e.actual_start ? e.actual_start.substring(0, 5) : '',
-              actual_end: e.actual_end ? e.actual_end.substring(0, 5) : '',
-              status: e.status,
-            }))
-          );
+          setRows([emptyRow()]);
+          setSavedTasks([]);
         }
       })
       .catch(() => setError('Unable to load today\'s timesheet.'))
@@ -268,7 +271,7 @@ const TimesheetPage = () => {
   };
 
   /* ── validations ─────────────────────────────────────────── */
-  const validateRows = (isSubmit) => {
+  const validateRows = () => {
     if (rows.length === 0) {
       setError('No tasks to save.');
       return false;
@@ -278,6 +281,8 @@ const TimesheetPage = () => {
       setError('Time overlap detected. Please adjust task timings before saving.');
       return false;
     }
+
+    let hasAnyTime = false;
 
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
@@ -295,49 +300,53 @@ const TimesheetPage = () => {
         setError(`Row ${rowNum}: Please enter a task description.`);
         return false;
       }
-      if (!r.planned_start || !r.planned_end) {
-        setError(`Row ${rowNum}: Please select planned start and end times.`);
-        return false;
-      }
-      if (calculateDuration(r.planned_start, r.planned_end) === '—') {
-        setError(`Row ${rowNum}: Planned start time must be before planned end time.`);
-        return false;
+
+      const hasPlanned = r.planned_start || r.planned_end;
+      const hasActual = r.actual_start || r.actual_end;
+      
+      if (hasPlanned || hasActual) {
+          hasAnyTime = true;
       }
 
-      if (isSubmit) {
+      if (hasPlanned) {
+        if (!r.planned_start || !r.planned_end) {
+          setError(`Row ${rowNum}: Please select both planned start and end times, or leave both empty.`);
+          return false;
+        }
+        if (calculateDuration(r.planned_start, r.planned_end) === '—') {
+          setError(`Row ${rowNum}: Planned start time must be before planned end time.`);
+          return false;
+        }
+      }
+
+      if (hasActual) {
         if (!r.actual_start || !r.actual_end) {
-          setError(`Row ${rowNum}: Please select actual start and end times for final submission.`);
+          setError(`Row ${rowNum}: Please select both actual start and end times, or leave both empty.`);
           return false;
         }
         if (calculateDuration(r.actual_start, r.actual_end) === '—') {
           setError(`Row ${rowNum}: Actual start time must be before actual end time.`);
           return false;
         }
-      } else {
-        if ((r.actual_start && !r.actual_end) || (!r.actual_start && r.actual_end)) {
-          setError(`Row ${rowNum}: Please select both actual start and end times, or leave both empty.`);
-          return false;
-        }
-        if (r.actual_start && r.actual_end && calculateDuration(r.actual_start, r.actual_end) === '—') {
-          setError(`Row ${rowNum}: Actual start time must be before actual end time.`);
-          return false;
-        }
       }
     }
 
-    if (isSubmit) {
-      if (actualTotal > 8 * 60) {
-        setError('Daily total actual hours must not exceed 8 hours.');
-        return false;
-      }
+    if (!hasAnyTime) {
+      setError('Please enter at least Planned Time or Actual Time for your tasks.');
+      return false;
+    }
+
+    if (actualTotal > 8 * 60) {
+      setError('Daily total actual hours must not exceed 8 hours.');
+      return false;
     }
 
     return true;
   };
 
   /* ── save / submit operations ────────────────────────────── */
-  const handleSaveDraft = async () => {
-    if (!validateRows(false)) return;
+  const handleSaveTimesheet = async () => {
+    if (!validateRows()) return;
     setSaving(true); setError(''); setMessage('');
     try {
       for (const row of rows) {
@@ -346,70 +355,19 @@ const TimesheetPage = () => {
           milestone_name: row.milestone_name,
           task_name: row.task_name,
           task_type: 'Development',
-          planned_start: row.planned_start,
-          planned_end: row.planned_end,
-          actual_start: row.actual_start || row.planned_start,
-          actual_end: row.actual_end || row.planned_end,
+          planned_start: row.planned_start || null,
+          planned_end: row.planned_end || null,
+          actual_start: row.actual_start || null,
+          actual_end: row.actual_end || null,
           remarks: row.task_name,
         };
-
         if (row.isExisting) {
-          if (row.status === 'draft') {
-            await updateTimesheet(row.id, payload);
-          }
+          await updateTimesheet(row.id, payload);
         } else {
           await createTimesheet(payload);
         }
       }
-      setMessage('Timesheet saved as draft.');
-      await loadData(false);
-    } catch (err) {
-      setError(getErrorMessage(err.response?.data));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleSubmitReport = async () => {
-    if (!validateRows(true)) return;
-    setSaving(true); setError(''); setMessage('');
-    try {
-      const savedIds = [];
-      for (const row of rows) {
-        const payload = {
-          project_name: row.project_name,
-          milestone_name: row.milestone_name,
-          task_name: row.task_name,
-          task_type: 'Development',
-          planned_start: row.planned_start,
-          planned_end: row.planned_end,
-          actual_start: row.actual_start,
-          actual_end: row.actual_end,
-          remarks: row.task_name,
-        };
-
-        if (row.isExisting) {
-          if (row.status === 'draft') {
-            await updateTimesheet(row.id, payload);
-            savedIds.push(row.id);
-          }
-        } else {
-          const res = await createTimesheet(payload);
-          savedIds.push(res.data.id);
-        }
-      }
-
-      for (const id of savedIds) {
-        await setTimesheetSubmissionStatus(id, 'submitted');
-      }
-
-      for (const row of rows) {
-        if (row.isExisting && row.status === 'draft' && !savedIds.includes(row.id)) {
-          await setTimesheetSubmissionStatus(row.id, 'submitted');
-        }
-      }
-
-      setMessage('Timesheet submitted successfully!');
+      setMessage('Timesheet Saved Successfully.');
       await loadData(false);
     } catch (err) {
       setError(getErrorMessage(err.response?.data));
@@ -670,26 +628,72 @@ const TimesheetPage = () => {
                 </button>
                 <div className="flex flex-wrap gap-2.5">
                   <button
-                    className={`${buttonClass.outline} min-h-10`}
-                    disabled={saving || rows.every(r => r.status === 'submitted')}
-                    onClick={handleSaveDraft}
+                    className={`${buttonClass.primary} min-h-10 bg-blue-600 hover:bg-blue-700`}
+                    disabled={saving}
+                    onClick={handleSaveTimesheet}
                     type="button"
                   >
-                    Save as Draft
-                  </button>
-                  <button
-                    className={`${buttonClass.primary} min-h-10`}
-                    disabled={saving || rows.every(r => r.status === 'submitted')}
-                    onClick={handleSubmitReport}
-                    type="button"
-                    style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}
-                  >
-                    <SendHorizontal size={15} /> Submit Report
+                    <Save size={15} className="mr-1.5" /> Save Timesheet
                   </button>
                 </div>
               </div>
-
             </div>
+
+            {/* ── Today's Saved Tasks ── */}
+            {savedTasks && savedTasks.length > 0 && (
+              <section className="mt-8 rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <div className="border-b border-slate-200 bg-slate-50 px-5 py-4">
+                  <h3 className="font-bold text-slate-800">Today's Saved Tasks</h3>
+                  <p className="text-xs text-slate-500 mt-1">Read-only overview of your saved planned and actual tasks for today.</p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm whitespace-nowrap">
+                    <thead className="bg-slate-50 text-slate-500 border-b border-slate-200">
+                      <tr>
+                        <th className="px-4 py-3 font-semibold">Project</th>
+                        <th className="px-4 py-3 font-semibold">Milestone</th>
+                        <th className="px-4 py-3 font-semibold">Task</th>
+                        <th className="px-4 py-3 font-semibold text-center text-blue-600 border-l border-slate-200" colSpan={3}>Planned Time</th>
+                        <th className="px-4 py-3 font-semibold text-center text-orange-600 border-l border-slate-200" colSpan={3}>Actual Time</th>
+                        <th className="px-4 py-3 font-semibold text-center border-l border-slate-200">Status</th>
+                      </tr>
+                      <tr className="border-b border-slate-200 bg-white text-[11px] uppercase tracking-wide">
+                        <th colSpan={3}></th>
+                        <th className="px-2 py-1.5 text-center border-l border-slate-200">From</th>
+                        <th className="px-2 py-1.5 text-center">To</th>
+                        <th className="px-2 py-1.5 text-center">Duration</th>
+                        <th className="px-2 py-1.5 text-center border-l border-slate-200">From</th>
+                        <th className="px-2 py-1.5 text-center">To</th>
+                        <th className="px-2 py-1.5 text-center">Duration</th>
+                        <th className="border-l border-slate-200"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {savedTasks.map((task, idx) => (
+                        <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                          <td className="px-4 py-3 text-slate-800 font-medium">{task.project_name || '—'}</td>
+                          <td className="px-4 py-3 text-slate-600">{task.milestone_name || '—'}</td>
+                          <td className="px-4 py-3 text-slate-600">{task.task_name || '—'}</td>
+
+                          <td className="px-2 py-3 text-center text-slate-600 border-l border-slate-100">{formatTimeAMPM(task.planned_start) || '—'}</td>
+                          <td className="px-2 py-3 text-center text-slate-600">{formatTimeAMPM(task.planned_end) || '—'}</td>
+                          <td className="px-2 py-3 text-center text-blue-600 font-bold bg-blue-50/30">{calculateDuration(task.planned_start, task.planned_end) || '—'}</td>
+
+                          <td className="px-2 py-3 text-center text-slate-600 border-l border-slate-100">{formatTimeAMPM(task.actual_start) || '—'}</td>
+                          <td className="px-2 py-3 text-center text-slate-600">{formatTimeAMPM(task.actual_end) || '—'}</td>
+                          <td className="px-2 py-3 text-center text-orange-600 font-bold bg-orange-50/30">{calculateDuration(task.actual_start, task.actual_end) || '—'}</td>
+                          <td className="px-4 py-3 text-center border-l border-slate-100">
+                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${task.actual_start && task.actual_end ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
+                              {task.actual_start && task.actual_end ? 'Actual Updated' : 'Planned'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            )}
 
           </div>
         )}

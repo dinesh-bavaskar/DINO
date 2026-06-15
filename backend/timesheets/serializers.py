@@ -52,6 +52,8 @@ class MilestoneSerializer(serializers.ModelSerializer):
 
 
 def calculate_hours(start, end):
+    if not start or not end:
+        return Decimal('0.00')
     start_dt = datetime.combine(timezone.localdate(), start)
     end_dt = datetime.combine(timezone.localdate(), end)
     if end_dt <= start_dt:
@@ -71,6 +73,10 @@ class TimesheetSerializer(serializers.ModelSerializer):
     reviewed_at = serializers.DateTimeField(source='daily_report.reviewed_at', read_only=True)
     project_name = serializers.CharField()
     milestone_name = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    planned_start = serializers.TimeField(required=False, allow_null=True)
+    planned_end = serializers.TimeField(required=False, allow_null=True)
+    actual_start = serializers.TimeField(required=False, allow_null=True)
+    actual_end = serializers.TimeField(required=False, allow_null=True)
 
     class Meta:
         model = Timesheet
@@ -107,6 +113,10 @@ class TimesheetSerializer(serializers.ModelSerializer):
 
         if (not is_admin and not is_testing) or force_test_validation:
             settings = TimesheetSetting.get_settings()
+            import logging
+            from django.conf import settings as django_settings
+            logger = logging.getLogger(__name__)
+
             current_time = timezone.localtime(timezone.now()).time()
 
             def is_time_in_window(t, start, end):
@@ -118,50 +128,55 @@ class TimesheetSerializer(serializers.ModelSerializer):
             in_planned_window = is_time_in_window(current_time, settings.planned_start_time, settings.planned_end_time)
             in_actual_window = is_time_in_window(current_time, settings.actual_start_time, settings.actual_end_time)
 
+            logger.info("=== Timesheet Validation Debug ===")
+            logger.info(f"Timezone being used: {django_settings.TIME_ZONE}")
+            logger.info(f"Current system time: {current_time}")
+            logger.info(f"Planned Window: {settings.planned_start_time} - {settings.planned_end_time}")
+            logger.info(f"Actual Window: {settings.actual_start_time} - {settings.actual_end_time}")
+            logger.info(f"in_planned_window: {in_planned_window}")
+            logger.info(f"in_actual_window: {in_actual_window}")
+            logger.info("==================================")
+
             new_planned_start = attrs.get('planned_start')
             new_planned_end = attrs.get('planned_end')
 
+            planned_changed = False
             if instance:
-                planned_changed = False
                 if new_planned_start is not None and new_planned_start != instance.planned_start:
                     planned_changed = True
                 if new_planned_end is not None and new_planned_end != instance.planned_end:
                     planned_changed = True
-
-                if planned_changed and not in_planned_window:
-                    raise serializers.ValidationError(
-                        f"Planned Time fields can only be edited during the Planned Time Window ({settings.planned_start_time.strftime('%I:%M %p')} to {settings.planned_end_time.strftime('%I:%M %p')})."
-                    )
             else:
-                if not in_planned_window:
-                    raise serializers.ValidationError(
-                        f"Planned Time fields can only be edited during the Planned Time Window ({settings.planned_start_time.strftime('%I:%M %p')} to {settings.planned_end_time.strftime('%I:%M %p')})."
-                    )
+                if new_planned_start or new_planned_end:
+                    planned_changed = True
+
+            logger.info(f"Validation result -> planned_changed: {planned_changed}, in_planned_window: {in_planned_window}")
+
+            if planned_changed and not in_planned_window:
+                raise serializers.ValidationError(
+                    f"Planned Time fields can only be edited during the Planned Time Window ({settings.planned_start_time.strftime('%I:%M %p')} to {settings.planned_end_time.strftime('%I:%M %p')})."
+                )
 
             # Check actual times
             new_actual_start = attrs.get('actual_start')
             new_actual_end = attrs.get('actual_end')
 
+            actual_changed = False
             if instance:
-                actual_changed = False
                 if new_actual_start is not None and new_actual_start != instance.actual_start:
                     actual_changed = True
                 if new_actual_end is not None and new_actual_end != instance.actual_end:
                     actual_changed = True
-
-                if actual_changed and not in_actual_window:
-                    raise serializers.ValidationError(
-                        f"Actual Time fields can only be edited during the Actual Time Window ({settings.actual_start_time.strftime('%I:%M %p')} to {settings.actual_end_time.strftime('%I:%M %p')})."
-                    )
             else:
-                if not in_actual_window:
-                    planned_s = new_planned_start
-                    planned_e = new_planned_end
+                if new_actual_start or new_actual_end:
+                    actual_changed = True
 
-                    if (new_actual_start and new_actual_start != planned_s) or (new_actual_end and new_actual_end != planned_e):
-                        raise serializers.ValidationError(
-                            f"Actual Time fields can only be edited during the Actual Time Window ({settings.actual_start_time.strftime('%I:%M %p')} to {settings.actual_end_time.strftime('%I:%M %p')})."
-                        )
+            logger.info(f"Validation result -> actual_changed: {actual_changed}, in_actual_window: {in_actual_window}")
+
+            if actual_changed and not in_actual_window:
+                raise serializers.ValidationError(
+                    f"Actual Time fields can only be edited during the Actual Time Window ({settings.actual_start_time.strftime('%I:%M %p')} to {settings.actual_end_time.strftime('%I:%M %p')})."
+                )
 
         if instance:
             entry_date = instance.daily_report.date

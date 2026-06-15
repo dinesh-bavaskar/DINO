@@ -624,7 +624,7 @@ const Settings = () => {
                 <div className="border-t border-slate-100 pt-5 space-y-5">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Planned Time Window */}
-                    <div className="space-y-3 p-4 rounded-xl bg-slate-50 border border-slate-200/60">
+                    <div className="space-y-3 p-2 rounded-xl bg-slate-50 border border-slate-200/60">
                       <h4 className="text-xs font-bold uppercase tracking-wider text-blue-700">Planned Time Entry Window</h4>
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
@@ -651,7 +651,7 @@ const Settings = () => {
                     </div>
 
                     {/* Actual Time Window */}
-                    <div className="space-y-3 p-4 rounded-xl bg-slate-50 border border-slate-200/60">
+                    <div className="space-y-3 p-2 rounded-xl bg-slate-50 border border-slate-200/60">
                       <h4 className="text-xs font-bold uppercase tracking-wider text-orange-700">Actual Time Entry Window</h4>
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
