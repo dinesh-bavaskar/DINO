@@ -109,58 +109,58 @@ const RegisterEmployee = () => {
             </div>
           </div>
 
-          <form className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm" onSubmit={handleSubmit}>
+          <form autoComplete="off" className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm" onSubmit={handleSubmit}>
             <div className="flex items-center gap-2 bg-blue-600 px-6 py-4 text-white">
               <UserPlus size={18} />
               <p className="text-sm font-semibold">Employee Information Form</p>
             </div>
             <div className="space-y-5 p-6">
               <div className="grid gap-4 md:grid-cols-2">
-                <Field label="Employee ID"><input className={inputClass} name="employee_id" onChange={handleChange} required value={form.employee_id} /></Field>
+                <Field label="Employee ID"><input autoComplete="off" className={inputClass} name="employee_id" onChange={handleChange} required value={form.employee_id} /></Field>
                 <Field label="Full Name"><input className={inputClass} name="full_name" onChange={handleChange} required value={form.full_name} /></Field>
                 <Field label="Email Address"><input className={inputClass} name="email" onChange={handleChange} required type="email" value={form.email} /></Field>
-                 <Field label="Role">
-                   <select className={inputClass} name="role" onChange={handleChange} value={form.role}>
-                     {roles.map((r) => (
-                       <option key={r.toLowerCase()} value={r.toLowerCase()}>{r}</option>
-                     ))}
-                   </select>
-                 </Field>
-                 <Field label="Department">
-                   <select
-                     className={inputClass}
-                     name="department"
-                     onChange={handleChange}
-                     required
-                     value={form.department}
-                   >
-                     <option value="">Select Department</option>
-                     {departments.map((dept) => (
-                       <option key={dept} value={dept}>
-                         {dept}
-                       </option>
-                     ))}
-                   </select>
-                 </Field>
-                 <Field label="Designation">
-                   <select
-                     className={inputClass}
-                     name="designation"
-                     onChange={handleChange}
-                     required
-                     value={form.designation}
-                   >
-                     <option value="">Select Designation</option>
-                     {designations.map((desg) => (
-                       <option key={desg} value={desg}>
-                         {desg}
-                       </option>
-                     ))}
-                   </select>
-                 </Field>
-                 <Field label="Password"><input className={inputClass} name="password" onChange={handleChange} required type="password" value={form.password} /></Field>
-                 <Field label="Confirm Password"><input className={inputClass} name="confirm_password" onChange={handleChange} required type="password" value={form.confirm_password} /></Field>
-               </div>
+                <Field label="Role">
+                  <select className={inputClass} name="role" onChange={handleChange} value={form.role}>
+                    {roles.map((r) => (
+                      <option key={r.toLowerCase()} value={r.toLowerCase()}>{r}</option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Department">
+                  <select
+                    className={inputClass}
+                    name="department"
+                    onChange={handleChange}
+                    required
+                    value={form.department}
+                  >
+                    <option value="">Select Department</option>
+                    {departments.map((dept) => (
+                      <option key={dept} value={dept}>
+                        {dept}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Designation">
+                  <select
+                    className={inputClass}
+                    name="designation"
+                    onChange={handleChange}
+                    required
+                    value={form.designation}
+                  >
+                    <option value="">Select Designation</option>
+                    {designations.map((desg) => (
+                      <option key={desg} value={desg}>
+                        {desg}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Password"><input autoComplete="new-password" className={inputClass} name="password" onChange={handleChange} required type="password" value={form.password} /></Field>
+                <Field label="Confirm Password"><input autoComplete="new-password" className={inputClass} name="confirm_password" onChange={handleChange} required type="password" value={form.confirm_password} /></Field>
+              </div>
 
               {error && <div className="whitespace-pre-line rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}
 

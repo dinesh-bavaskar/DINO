@@ -13,19 +13,19 @@ const DashboardCards = ({ summary }) => {
 
   const cards = [
     {
-      label: "Today's Logged Hours",
+      label: 'Logged Today',
       value: `${logged}h`,
     },
     {
-      label: 'Remaining Hours',
+      label: 'Remaining',
       value: `${remaining}h`,
     },
     {
-      label: 'Tasks Logged',
+      label: 'Tasks',
       value: tasks,
     },
     {
-      label: "Today's Date",
+      label: 'Date',
       value: date,
     },
   ];
@@ -40,7 +40,7 @@ const DashboardCards = ({ summary }) => {
           </p>
 
           {/* Value */}
-          <p className={`font-black text-slate-950 leading-none whitespace-nowrap ${
+          <p className={`font-medium text-slate-950 leading-none whitespace-nowrap ${
             String(value).length > 5 
               ? 'text-lg sm:text-xl xl:text-2xl' 
               : 'text-2xl xl:text-3xl'

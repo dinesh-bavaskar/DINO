@@ -68,27 +68,7 @@ const Sidebar = () => {
           )}
         </div>
 
-        {/* User card */}
-        <div className={`border-b border-blue-900/50 p-3 ${isCollapsed ? 'flex justify-center' : ''}`}>
-          {isCollapsed ? (
-            <div
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-sm font-bold text-white shadow-sm"
-              title={user?.full_name}
-            >
-              {user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
-            </div>
-          ) : (
-            <div className="flex items-center gap-3 rounded-lg border border-blue-900/50 bg-blue-900/30 p-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-sm font-bold text-white">
-                {user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
-              </div>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-white">{user?.full_name}</p>
-                <p className="mt-0.5 text-xs font-medium text-sky-400">{user?.employee_id}</p>
-              </div>
-            </div>
-          )}
-        </div>
+
 
         {/* Nav links */}
         <nav className="flex-1 overflow-y-auto p-2">

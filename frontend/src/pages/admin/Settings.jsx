@@ -143,16 +143,12 @@ const Settings = () => {
 
   const [draftDailyHours, setDraftDailyHours] = useState(() => timesheetSettings.dailyTargetHours || 8);
   const [draftWeeklyHours, setDraftWeeklyHours] = useState(() => timesheetSettings.weeklyTargetHours || 40);
-  const [draftAllowOverlap, setDraftAllowOverlap] = useState(() => timesheetSettings.allowOverlap || false);
-  const [draftRequireMilestone, setDraftRequireMilestone] = useState(() => timesheetSettings.requireMilestone || false);
-
   const handleSaveTimesheetSettings = (e) => {
     e.preventDefault();
     const updated = {
+      ...timesheetSettings,
       dailyTargetHours: Number(draftDailyHours),
       weeklyTargetHours: Number(draftWeeklyHours),
-      allowOverlap: draftAllowOverlap,
-      requireMilestone: draftRequireMilestone
     };
     setTimesheetSettings(updated);
     localStorage.setItem('system-timesheet-settings', JSON.stringify(updated));
@@ -724,30 +720,7 @@ const Settings = () => {
                     </div>
                   </div>
 
-                  {/* Overlap & Milestone Toggles */}
-                  <div className="space-y-4 pt-2">
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100">
-                      <div>
-                        <p className="text-sm font-semibold text-slate-900">Allow Overlapping Tasks</p>
-                        <p className="text-xs text-slate-500">Allow users to log tasks with overlapping timeslots.</p>
-                      </div>
-                      <Switch
-                        checked={draftAllowOverlap}
-                        onCheckedChange={setDraftAllowOverlap}
-                      />
-                    </div>
 
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100">
-                      <div>
-                        <p className="text-sm font-semibold text-slate-900">Require Milestone Selection</p>
-                        <p className="text-xs text-slate-500">Force users to select a milestone when entering timesheets.</p>
-                      </div>
-                      <Switch
-                        checked={draftRequireMilestone}
-                        onCheckedChange={setDraftRequireMilestone}
-                      />
-                    </div>
-                  </div>
 
 
                 </div>

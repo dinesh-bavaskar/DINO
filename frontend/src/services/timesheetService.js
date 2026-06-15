@@ -12,6 +12,7 @@ const normalizeList = (response) => ({
 });
 
 export const createTimesheet = (data) => API.post('/timesheets/', data);
+export const getTimesheetHistory = () => API.get('/timesheets/');
 export const getTodayTimesheets = () => API.get('/timesheets/today/');
 export const updateTimesheet = (id, data) => API.put(`/timesheets/${id}/`, data);
 export const deleteTimesheet = (id) => API.delete(`/timesheets/${id}/`);

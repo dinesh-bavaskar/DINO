@@ -193,6 +193,13 @@ class AdminMilestoneDetailView(AdminOnlyMixin, APIView):
 
 
 class TimesheetListCreateView(EmployeeOnlyMixin, APIView):
+    def get(self, request):
+        employee, error = self.get_employee_or_response(request)
+        if error:
+            return error
+        entries = Timesheet.objects.filter(daily_report__employee=employee).order_by('-daily_report__date', '-actual_start')
+        return Response(TimesheetSerializer(entries, many=True).data)
+
     def post(self, request):
         employee, error = self.get_employee_or_response(request)
         if error:
