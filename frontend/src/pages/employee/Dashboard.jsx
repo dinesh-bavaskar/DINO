@@ -307,13 +307,6 @@ const EmployeeDashboard = () => {
                     {uniqueMilestones.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
-                <div className="flex flex-col gap-1.5 flex-1 min-w-[120px]">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Status</label>
-                  <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="h-9 rounded-md border border-slate-300 px-2 text-xs text-slate-800 bg-white">
-                    <option value="">All Statuses</option>
-                    {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
                 <div className="shrink-0">
                   <button onClick={() => { setFromDate(''); setToDate(''); setProjectFilter(''); setMilestoneFilter(''); setStatusFilter(''); }} className="h-9 px-4 rounded-md bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-600 transition">
                     Clear Filters
@@ -334,7 +327,6 @@ const EmployeeDashboard = () => {
                       <th className="px-4 py-3">End Time</th>
                       <th className="px-4 py-3 text-center">Planned Hrs</th>
                       <th className="px-4 py-3 text-center">Actual Hrs</th>
-                      <th className="px-4 py-3">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -358,7 +350,6 @@ const EmployeeDashboard = () => {
                           <td className="px-4 py-2.5 text-slate-500">{row.actual_end?.substring(0, 5) || row.planned_end?.substring(0, 5) || '-'}</td>
                           <td className="px-4 py-2.5 text-center text-blue-600 bg-blue-50/30">{parseFloat(row.planned_hours || 0).toFixed(2)}</td>
                           <td className="px-4 py-2.5 text-center font-bold text-orange-600 bg-orange-50/30">{parseFloat(row.actual_hours || 0).toFixed(2)}</td>
-                          <td className="px-4 py-2.5"><StatusBadge status={row.status} /></td>
                         </tr>
                       ))
                     )}
@@ -394,9 +385,6 @@ const EmployeeDashboard = () => {
                         <p className="text-xs text-slate-500 mt-0.5">
                           {formatDate(row.date)} • {row.actual_start?.substring(0, 5)} - {row.actual_end?.substring(0, 5)} • <span className="font-bold text-orange-600">{parseFloat(row.actual_hours || 0).toFixed(2)} hrs</span>
                         </p>
-                      </div>
-                      <div className="shrink-0">
-                        <StatusBadge status={row.status} />
                       </div>
                     </div>
                   ))

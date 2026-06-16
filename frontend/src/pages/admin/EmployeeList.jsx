@@ -55,12 +55,12 @@ const EmployeeList = () => {
     const timeout = setTimeout(() => {
       setLoading(true);
       getEmployees({ search, page, page_size: 10 })
-      .then((res) => {
-        setEmployees(res.data);
-        setMeta(res.meta);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+        .then((res) => {
+          setEmployees(res.data);
+          setMeta(res.meta);
+        })
+        .catch(console.error)
+        .finally(() => setLoading(false));
     }, 250);
     return () => clearTimeout(timeout);
   }, [search, page]);
@@ -196,7 +196,7 @@ const EmployeeList = () => {
                       </td>
                     </tr>
                   ) : employees.map((emp, index) => (
-                    <tr className="hover:bg-slate-50" key={emp.id}>
+                    <tr className="hover:bg-slate-50 cursor-pointer transition-colors" key={emp.id} onClick={() => navigate(`/admin/employees/${emp.id}`)}>
                       <td className="px-2.5 py-3 text-sm font-medium text-slate-400">{(page - 1) * 10 + index + 1}</td>
                       <td className="px-2.5 py-3">
                         <div className="flex items-center gap-2.5 min-w-0">
@@ -218,14 +218,14 @@ const EmployeeList = () => {
                         <div className="flex gap-1.5">
                           <button
                             className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition whitespace-nowrap"
-                            onClick={() => openEditModal(emp)}
+                            onClick={(e) => { e.stopPropagation(); openEditModal(emp); }}
                             type="button"
                           >
                             <Edit size={13} /> Edit
                           </button>
                           <button
                             className={`inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-semibold transition whitespace-nowrap ${emp.is_active ? 'bg-red-50 text-red-700 hover:bg-red-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}
-                            onClick={() => toggleStatus(emp)}
+                            onClick={(e) => { e.stopPropagation(); toggleStatus(emp); }}
                             type="button"
                           >
                             <Power size={13} /> {emp.is_active ? 'Deactivate' : 'Activate'}

@@ -11,6 +11,7 @@ import Profile from '../pages/employee/Profile';
 import EmployeeDashboard from '../pages/employee/Dashboard';
 import TodayTimesheet from '../pages/employee/TodayTimesheet';
 import EmployeeSubmissions from '../pages/admin/EmployeeSubmissions';
+import EmployeeProfile from '../pages/admin/EmployeeProfile';
 import AdminSettings from '../pages/admin/Settings';
 
 const AppRoutes = () => {
@@ -42,6 +43,14 @@ const AppRoutes = () => {
             element={
               <AdminRoute>
                 <EmployeeList />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/employees/:id"
+            element={
+              <AdminRoute>
+                <EmployeeProfile />
               </AdminRoute>
             }
           />

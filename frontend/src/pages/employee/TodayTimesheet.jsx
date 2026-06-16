@@ -515,7 +515,7 @@ const TimesheetPage = () => {
               )}
               <div>
                 {settings && (
-                  <div className="flex w-full text-xs font-bold text-slate-500 pb-1.5">
+                  <div className="flex w-full text-xs font-normal text-slate-500 pb-1.5">
                     <div style={{ width: '44.23%' }} />
                     <div style={{ width: '25.96%' }} className={`flex items-center justify-center gap-1.5 ${isPlannedEditable ? 'text-green-600' : ''}`}>
                       {isPlannedEditable && (
@@ -553,15 +553,15 @@ const TimesheetPage = () => {
                         <col className="w-[4%]" />
                       </colgroup>
                       <thead>
-                        <tr className="bg-white border-b border-slate-200">
-                          <th className="border-r border-slate-200 px-3 py-2 text-xs font-bold text-slate-700" rowSpan={2}>Project</th>
-                          <th className="border-r border-slate-200 px-3 py-2 text-xs font-bold text-slate-700" rowSpan={2}>Milestone</th>
-                          <th className="border-r border-slate-200 px-3 py-2 text-xs font-bold text-slate-700" rowSpan={2}>Task Description</th>
-                          <th className={`relative border-r border-slate-200 px-2 py-1.5 text-center text-xs font-bold text-blue-700 ${!isPlannedEditable ? 'opacity-80 bg-slate-50/50' : ''}`} colSpan={3}>
+                        <tr className="bg-blue-950 border-b border-blue-900">
+                          <th className="border-r border-blue-900 px-3 py-2 text-xs font-bold text-slate-200" rowSpan={2}>Project</th>
+                          <th className="border-r border-blue-900 px-3 py-2 text-xs font-bold text-slate-200" rowSpan={2}>Milestone</th>
+                          <th className="border-r border-blue-900 px-3 py-2 text-xs font-bold text-slate-200" rowSpan={2}>Task Description</th>
+                          <th className={`relative border-r border-blue-900 px-2 py-1.5 text-center text-xs font-normal text-white ${!isPlannedEditable ? 'opacity-80 bg-blue-900/50' : ''}`} colSpan={3}>
                             <div className="flex items-center justify-center gap-1.5">
-                              Planned Time <span className={`inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-[11px] font-bold ${plannedTotal < targetMinutes ? 'bg-red-50 border-red-200 text-red-600' : 'bg-green-50 border-green-300 text-green-700'}`}>{formatTotal(plannedTotal)} / {dailyTargetHours}h</span>
+                              Planned Time <span className={`inline-flex items-center justify-center px-1 text-[11px] font-normal ${plannedTotal < targetMinutes ? 'text-red-400' : 'text-green-400'}`}>{formatTotal(plannedTotal)} / {dailyTargetHours}h</span>
                               {!isPlannedEditable && (
-                                <div className="inline-flex items-center justify-center bg-red-50 border border-red-200 text-red-600 rounded p-0.5 cursor-help group relative ml-1 shadow-sm">
+                                <div className="inline-flex items-center justify-center text-red-400 cursor-help group relative ml-1">
                                   <Lock size={12} className="stroke-[2.5]" />
                                   <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[11px] rounded-lg px-2.5 py-1 whitespace-nowrap z-50 shadow-lg border border-slate-700 font-normal normal-case tracking-normal">
                                     Planned Time Window Closed
@@ -570,11 +570,11 @@ const TimesheetPage = () => {
                               )}
                             </div>
                           </th>
-                          <th className={`relative border-r border-slate-200 px-2 py-1.5 text-center text-xs font-bold text-red-500 ${!isActualEditable ? 'opacity-80 bg-slate-50/50' : ''}`} colSpan={3}>
+                          <th className={`relative border-r border-blue-900 px-2 py-1.5 text-center text-xs font-normal text-white ${!isActualEditable ? 'opacity-80 bg-blue-900/50' : ''}`} colSpan={3}>
                             <div className="flex items-center justify-center gap-1.5">
-                              Actual Time <span className={`inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-[11px] font-bold ${actualTotal < targetMinutes ? 'bg-red-50 border-red-200 text-red-600' : 'bg-green-50 border-green-300 text-green-700'}`}>{formatTotal(actualTotal)} / {dailyTargetHours}h</span>
+                              Actual Time <span className={`inline-flex items-center justify-center px-1 text-[11px] font-normal ${actualTotal < targetMinutes ? 'text-red-400' : 'text-green-400'}`}>{formatTotal(actualTotal)} / {dailyTargetHours}h</span>
                               {!isActualEditable && (
-                                <div className="inline-flex items-center justify-center bg-red-50 border border-red-200 text-red-600 rounded p-0.5 cursor-help group relative ml-1 shadow-sm">
+                                <div className="inline-flex items-center justify-center text-red-400 cursor-help group relative ml-1">
                                   <Lock size={12} className="stroke-[2.5]" />
                                   <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[11px] rounded-lg px-2.5 py-1 whitespace-nowrap z-50 shadow-lg border border-slate-700 font-normal normal-case tracking-normal">
                                     Actual Time Window Closed
@@ -585,13 +585,13 @@ const TimesheetPage = () => {
                           </th>
                           <th className="px-1 py-2" rowSpan={2} />
                         </tr>
-                        <tr className="bg-white border-b border-slate-200">
-                          <th className={`border-r border-slate-200 px-2 py-1 text-center text-[10px] font-bold text-slate-400 ${!isPlannedEditable ? 'opacity-60 bg-slate-50/50 blur-[0.5px]' : ''}`}>From</th>
-                          <th className={`border-r border-slate-200 px-2 py-1 text-center text-[10px] font-bold text-slate-400 ${!isPlannedEditable ? 'opacity-60 bg-slate-50/50 blur-[0.5px]' : ''}`}>To</th>
-                          <th className={`border-r border-slate-200 px-2 py-1 text-center text-[10px] font-bold text-slate-400 ${!isPlannedEditable ? 'opacity-60 bg-slate-50/50 blur-[0.5px]' : ''}`}>Dur</th>
-                          <th className={`border-r border-slate-200 px-2 py-1 text-center text-[10px] font-bold text-slate-400 ${!isActualEditable ? 'opacity-60 bg-slate-50/50 blur-[0.5px]' : ''}`}>From</th>
-                          <th className={`border-r border-slate-200 px-2 py-1 text-center text-[10px] font-bold text-slate-400 ${!isActualEditable ? 'opacity-60 bg-slate-50/50 blur-[0.5px]' : ''}`}>To</th>
-                          <th className={`border-r border-slate-200 px-2 py-1 text-center text-[10px] font-bold text-slate-400 ${!isActualEditable ? 'opacity-60 bg-slate-50/50 blur-[0.5px]' : ''}`}>Dur</th>
+                        <tr className="bg-blue-950 border-b border-blue-900">
+                          <th className={`border-r border-blue-900 px-2 py-1 text-center text-[10px] font-bold text-white ${!isPlannedEditable ? 'opacity-60 bg-blue-900/50' : ''}`}>From</th>
+                          <th className={`border-r border-blue-900 px-2 py-1 text-center text-[10px] font-bold text-white ${!isPlannedEditable ? 'opacity-60 bg-blue-900/50' : ''}`}>To</th>
+                          <th className={`border-r border-blue-900 px-2 py-1 text-center text-[10px] font-bold text-white ${!isPlannedEditable ? 'opacity-60 bg-blue-900/50' : ''}`}>Dur</th>
+                          <th className={`border-r border-blue-900 px-2 py-1 text-center text-[10px] font-bold text-white ${!isActualEditable ? 'opacity-60 bg-blue-900/50' : ''}`}>From</th>
+                          <th className={`border-r border-blue-900 px-2 py-1 text-center text-[10px] font-bold text-white ${!isActualEditable ? 'opacity-60 bg-blue-900/50' : ''}`}>To</th>
+                          <th className={`border-r border-blue-900 px-2 py-1 text-center text-[10px] font-bold text-white ${!isActualEditable ? 'opacity-60 bg-blue-900/50' : ''}`}>Dur</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -659,7 +659,7 @@ const TimesheetPage = () => {
                               </td>
 
                               {/* Planned From */}
-                              <td className={`border-r border-slate-200 p-1 ${!isPlannedEditable ? 'opacity-60 bg-slate-50/50 blur-[1px] pointer-events-none' : ''}`}>
+                              <td className={`border-r border-slate-200 p-1 ${!isPlannedEditable ? 'opacity-60 bg-slate-50/50 pointer-events-none' : ''}`}>
                                 <TimePicker
                                   disabled={isPlannedReadOnly || !isPlannedEditable}
                                   className={`w-full ${hasPlannedOverlap ? '!bg-red-50 !border-red-400 focus:!border-red-500 focus:!ring-red-200 !text-red-900' : 'border-slate-200 focus:border-blue-400'}`}
@@ -669,7 +669,7 @@ const TimesheetPage = () => {
                               </td>
 
                               {/* Planned To */}
-                              <td className={`border-r border-slate-200 p-1 ${!isPlannedEditable ? 'opacity-60 bg-slate-50/50 blur-[1px] pointer-events-none' : ''}`}>
+                              <td className={`border-r border-slate-200 p-1 ${!isPlannedEditable ? 'opacity-60 bg-slate-50/50 pointer-events-none' : ''}`}>
                                 <TimePicker
                                   disabled={isPlannedReadOnly || !isPlannedEditable}
                                   className={`w-full ${hasPlannedOverlap ? '!bg-red-50 !border-red-400 !text-red-900' : 'border-slate-200 focus:border-blue-400'}`}
@@ -679,12 +679,12 @@ const TimesheetPage = () => {
                               </td>
 
                               {/* Planned Dur */}
-                              <td className={`border-r border-slate-200 px-2 py-2 text-center text-xs font-bold text-blue-700 ${!isPlannedEditable ? 'opacity-60 bg-slate-50/50 blur-[1px]' : ''}`}>
+                              <td className={`border-r border-slate-200 px-2 py-2 text-center text-xs font-bold text-blue-700 ${!isPlannedEditable ? 'opacity-60 bg-slate-50/50' : ''}`}>
                                 {calculateDuration(row.planned_start, row.planned_end)}
                               </td>
 
                               {/* Actual From */}
-                              <td className={`border-r border-slate-200 p-1 ${!isActualEditable ? 'opacity-60 bg-slate-50/50 blur-[1px] pointer-events-none' : ''}`}>
+                              <td className={`border-r border-slate-200 p-1 ${!isActualEditable ? 'opacity-60 bg-slate-50/50 pointer-events-none' : ''}`}>
                                 <TimePicker
                                   disabled={isActualReadOnly || !isActualEditable}
                                   className={`w-full ${hasActualOverlap ? '!bg-red-50 !border-red-400 !text-red-900' : 'border-slate-200 focus:border-orange-400'}`}
@@ -694,7 +694,7 @@ const TimesheetPage = () => {
                               </td>
 
                               {/* Actual To */}
-                              <td className={`border-r border-slate-200 p-1 ${!isActualEditable ? 'opacity-60 bg-slate-50/50 blur-[1px] pointer-events-none' : ''}`}>
+                              <td className={`border-r border-slate-200 p-1 ${!isActualEditable ? 'opacity-60 bg-slate-50/50 pointer-events-none' : ''}`}>
                                 <TimePicker
                                   disabled={isActualReadOnly || !isActualEditable}
                                   className={`w-full ${hasActualOverlap ? '!bg-red-50 !border-red-400 !text-red-900' : 'border-slate-200 focus:border-orange-400'}`}
@@ -704,7 +704,7 @@ const TimesheetPage = () => {
                               </td>
 
                               {/* Actual Dur */}
-                              <td className={`border-r border-slate-200 px-2 py-2 text-center text-xs font-bold text-orange-600 ${!isActualEditable ? 'opacity-60 bg-slate-50/50 blur-[1px]' : ''}`}>
+                              <td className={`border-r border-slate-200 px-2 py-2 text-center text-xs font-bold text-orange-600 ${!isActualEditable ? 'opacity-60 bg-slate-50/50' : ''}`}>
                                 {calculateDuration(row.actual_start, row.actual_end)}
                               </td>
 
