@@ -150,7 +150,6 @@
   * {
     @apply border-border;
     box-sizing: border-box;
-    font-weight: 400 !important;
   }
 
   html,

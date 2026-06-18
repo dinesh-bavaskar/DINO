@@ -160,9 +160,9 @@ const EmployeeDashboard = () => {
             {/* Header Actions */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-2">
               <div>
-                <h1 className="text-xl font-bold text-slate-900">Your Productivity Overview</h1>
+                <h1 className="text-xl font-semibold text-slate-900">Your Productivity Overview</h1>
               </div>
-              <Link to="/employee/timesheet" className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
+              <Link to="/employee/timesheet" className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-blue-900 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-950">
                 <Table2 size={16} /> Enter Today's Timesheet
               </Link>
             </div>
@@ -178,7 +178,7 @@ const EmployeeDashboard = () => {
                   { label: 'This Month', value: `${stats.monthHours}h` },
                 ].map((card, i) => (
                   <div key={i} className="flex-1 min-w-[140px] px-5 py-5 sm:px-6">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 truncate">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-2 truncate">
                       {card.label}
                     </p>
                     <p className={`font-medium text-slate-950 leading-none whitespace-nowrap ${
@@ -197,38 +197,36 @@ const EmployeeDashboard = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               
               {/* Quick Insights */}
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm flex flex-col">
-                <div className="border-b border-slate-100 p-4">
-                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <Activity size={16} className="text-blue-500" /> Quick Insights
-                  </h3>
+              <div className="rounded-xl border border-slate-200 bg-white shadow-sm flex flex-col overflow-hidden">
+                <div className="border-b border-slate-200 px-6 py-4 relative z-10 shadow-sm flex items-center gap-2 bg-white">
+                  <Activity size={18} className="text-blue-500" />
+                  <h3 className="font-medium text-slate-950 text-base">Quick Insights</h3>
                 </div>
                 <div className="p-4 flex-1 space-y-4">
                   <div className="flex justify-between items-center border-b border-slate-50 pb-3">
                     <span className="text-sm text-slate-500">Most Worked Project</span>
-                    <span className="text-sm font-bold text-slate-900 truncate max-w-[120px]">{stats.mostWorkedProject}</span>
+                    <span className="text-sm font-semibold text-slate-900 truncate max-w-[120px]">{stats.mostWorkedProject}</span>
                   </div>
                   <div className="flex justify-between items-center border-b border-slate-50 pb-3">
                     <span className="text-sm text-slate-500">Active Projects</span>
-                    <span className="text-sm font-bold text-slate-900">{stats.totalProjects}</span>
+                    <span className="text-sm font-semibold text-slate-900">{stats.totalProjects}</span>
                   </div>
                   <div className="flex justify-between items-center border-b border-slate-50 pb-3">
                     <span className="text-sm text-slate-500">Avg Daily Hours</span>
-                    <span className="text-sm font-bold text-slate-900">{stats.avgDaily}h / day</span>
+                    <span className="text-sm font-semibold text-slate-900">{stats.avgDaily}h / day</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-slate-500">Last Active Date</span>
-                    <span className="text-sm font-bold text-slate-900">{formatDate(stats.lastWorkingDate)}</span>
+                    <span className="text-sm font-semibold text-slate-900">{formatDate(stats.lastWorkingDate)}</span>
                   </div>
                 </div>
               </div>
 
               {/* Project-wise Summary */}
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm flex flex-col lg:col-span-2">
-                <div className="border-b border-slate-100 p-4">
-                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <BarChart size={16} className="text-emerald-500" /> Project-wise Summary
-                  </h3>
+              <div className="rounded-xl border border-slate-200 bg-white shadow-sm flex flex-col lg:col-span-2 overflow-hidden">
+                <div className="border-b border-slate-200 px-6 py-4 relative z-10 shadow-sm flex items-center gap-2 bg-white">
+                  <BarChart size={18} className="text-emerald-500" />
+                  <h3 className="font-medium text-slate-950 text-base">Project-wise Summary</h3>
                 </div>
                 <div className="flex-1 overflow-auto max-h-[220px] p-5 space-y-5">
                   {projectSummary.length === 0 ? (
@@ -250,13 +248,13 @@ const EmployeeDashboard = () => {
                       return (
                         <div key={ps.name} className="flex flex-col gap-2">
                           <div className="flex justify-between items-center text-sm">
-                            <span className="font-bold text-slate-800 flex items-center gap-2">
+                            <span className="font-semibold text-slate-800 flex items-center gap-2">
                               {ps.name} 
                               <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-md">
                                 {ps.tasks} task{ps.tasks !== 1 ? 's' : ''}
                               </span>
                             </span>
-                            <span className="font-black text-slate-900">{ps.hours.toFixed(2)} <span className="text-slate-400 text-xs font-medium">hrs</span></span>
+                            <span className="font-semibold text-slate-900">{ps.hours.toFixed(2)} <span className="text-slate-400 text-xs font-medium">hrs</span></span>
                           </div>
                           <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
                             <div 
@@ -273,11 +271,12 @@ const EmployeeDashboard = () => {
             </div>
 
             {/* ── Filters & History Table ── */}
-            <div className="rounded-xl border border-slate-200 bg-white shadow-sm flex flex-col">
-              <div className="border-b border-slate-100 p-4 bg-slate-50/50 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-t-xl">
-                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Table2 size={18} className="text-indigo-500" /> Work History
-                </h3>
+            <div className="rounded-xl border border-slate-200 bg-white shadow-sm flex flex-col overflow-hidden">
+              <div className="border-b border-slate-200 px-6 py-4 relative z-10 shadow-sm flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-white">
+                <div className="flex items-center gap-2">
+                  <Table2 size={18} className="text-indigo-500" />
+                  <h3 className="font-medium text-slate-950 text-base">Work History</h3>
+                </div>
                 <div className="flex items-center gap-2 text-sm text-slate-500">
                   <Filter size={14} /> <span>Filter Results</span>
                 </div>
@@ -286,22 +285,22 @@ const EmployeeDashboard = () => {
               {/* Filter Toolbar */}
               <div className="p-4 border-b border-slate-100 bg-white flex flex-wrap gap-3 items-end">
                 <div className="flex flex-col gap-1.5 flex-1 min-w-[120px]">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">From Date</label>
+                  <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">From Date</label>
                   <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} className="h-9 rounded-md border border-slate-300 px-2 text-xs text-slate-800" />
                 </div>
                 <div className="flex flex-col gap-1.5 flex-1 min-w-[120px]">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">To Date</label>
+                  <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">To Date</label>
                   <input type="date" value={toDate} onChange={e => setToDate(e.target.value)} className="h-9 rounded-md border border-slate-300 px-2 text-xs text-slate-800" />
                 </div>
                 <div className="flex flex-col gap-1.5 flex-1 min-w-[140px]">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Project</label>
+                  <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Project</label>
                   <select value={projectFilter} onChange={e => setProjectFilter(e.target.value)} className="h-9 rounded-md border border-slate-300 px-2 text-xs text-slate-800 bg-white">
                     <option value="">All Projects</option>
                     {uniqueProjects.map(p => <option key={p} value={p}>{p}</option>)}
                   </select>
                 </div>
                 <div className="flex flex-col gap-1.5 flex-1 min-w-[140px]">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Milestone</label>
+                  <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Milestone</label>
                   <select value={milestoneFilter} onChange={e => setMilestoneFilter(e.target.value)} className="h-9 rounded-md border border-slate-300 px-2 text-xs text-slate-800 bg-white">
                     <option value="">All Milestones</option>
                     {uniqueMilestones.map(m => <option key={m} value={m}>{m}</option>)}
@@ -317,16 +316,16 @@ const EmployeeDashboard = () => {
               {/* Table */}
               <div className="overflow-x-auto min-h-[300px]">
                 <table className="w-full text-left text-sm whitespace-nowrap">
-                  <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                  <thead className="bg-blue-900 border-b border-blue-950 text-[11px] font-semibold uppercase tracking-wider text-white">
                     <tr>
-                      <th className="px-4 py-3">Date</th>
-                      <th className="px-4 py-3">Project</th>
-                      <th className="px-4 py-3">Milestone</th>
-                      <th className="px-4 py-3 max-w-[200px]">Task Description</th>
-                      <th className="px-4 py-3">Start Time</th>
-                      <th className="px-4 py-3">End Time</th>
-                      <th className="px-4 py-3 text-center">Planned Hrs</th>
-                      <th className="px-4 py-3 text-center">Actual Hrs</th>
+                      <th className="px-4 py-3 font-semibold">Date</th>
+                      <th className="px-4 py-3 font-semibold">Project</th>
+                      <th className="px-4 py-3 font-semibold">Milestone</th>
+                      <th className="px-4 py-3 max-w-[200px] font-semibold">Task Description</th>
+                      <th className="px-4 py-3 font-semibold">Start Time</th>
+                      <th className="px-4 py-3 font-semibold">End Time</th>
+                      <th className="px-4 py-3 text-center font-semibold">Planned Hrs</th>
+                      <th className="px-4 py-3 text-center font-semibold">Actual Hrs</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -348,8 +347,8 @@ const EmployeeDashboard = () => {
                           <td className="px-4 py-2.5 text-slate-600 max-w-[200px] truncate" title={row.task_name}>{row.task_name || '-'}</td>
                           <td className="px-4 py-2.5 text-slate-500">{row.actual_start?.substring(0, 5) || row.planned_start?.substring(0, 5) || '-'}</td>
                           <td className="px-4 py-2.5 text-slate-500">{row.actual_end?.substring(0, 5) || row.planned_end?.substring(0, 5) || '-'}</td>
-                          <td className="px-4 py-2.5 text-center text-blue-600 bg-blue-50/30">{parseFloat(row.planned_hours || 0).toFixed(2)}</td>
-                          <td className="px-4 py-2.5 text-center font-bold text-orange-600 bg-orange-50/30">{parseFloat(row.actual_hours || 0).toFixed(2)}</td>
+                          <td className="px-4 py-2.5 text-center text-blue-900 bg-blue-50/30">{parseFloat(row.planned_hours || 0).toFixed(2)}</td>
+                          <td className="px-4 py-2.5 text-center font-semibold text-orange-600 bg-orange-50/30">{parseFloat(row.actual_hours || 0).toFixed(2)}</td>
                         </tr>
                       ))
                     )}
@@ -362,11 +361,10 @@ const EmployeeDashboard = () => {
             </div>
 
             {/* ── Recent Activity List ── */}
-            <div className="rounded-xl border border-slate-200 bg-white shadow-sm flex flex-col">
-              <div className="border-b border-slate-100 p-4">
-                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <CheckCircle2 size={16} className="text-rose-500" /> Recent Completed Activity
-                </h3>
+            <div className="rounded-xl border border-slate-200 bg-white shadow-sm flex flex-col overflow-hidden">
+              <div className="border-b border-slate-200 px-6 py-4 relative z-10 shadow-sm flex items-center gap-2 bg-white">
+                <CheckCircle2 size={18} className="text-rose-500" />
+                <h3 className="font-medium text-slate-950 text-base">Recent Completed Activity</h3>
               </div>
               <div className="divide-y divide-slate-100">
                 {recentActivity.length === 0 ? (
@@ -374,7 +372,7 @@ const EmployeeDashboard = () => {
                 ) : (
                   recentActivity.map(row => (
                     <div key={row.id} className="p-4 flex items-start gap-4 hover:bg-slate-50 transition">
-                      <div className="h-8 w-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 mt-0.5">
+                      <div className="h-8 w-8 rounded-full bg-blue-100 text-blue-900 flex items-center justify-center shrink-0 mt-0.5">
                         <FolderGit2 size={14} />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -383,7 +381,7 @@ const EmployeeDashboard = () => {
                           <span className="font-normal text-slate-500 ml-2">on {row.project_name}</span>
                         </p>
                         <p className="text-xs text-slate-500 mt-0.5">
-                          {formatDate(row.date)} • {row.actual_start?.substring(0, 5)} - {row.actual_end?.substring(0, 5)} • <span className="font-bold text-orange-600">{parseFloat(row.actual_hours || 0).toFixed(2)} hrs</span>
+                          {formatDate(row.date)} • {row.actual_start?.substring(0, 5)} - {row.actual_end?.substring(0, 5)} • <span className="font-semibold text-orange-600">{parseFloat(row.actual_hours || 0).toFixed(2)} hrs</span>
                         </p>
                       </div>
                     </div>

@@ -35,7 +35,7 @@ const DashboardCards = ({ summary }) => {
       {cards.map(({ label, value }) => (
         <div key={label} className="flex-1 min-w-0 px-4 py-5 sm:px-6">
           {/* Label */}
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-2">
             {label}
           </p>
 

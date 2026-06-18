@@ -5,6 +5,7 @@ import Navbar from '../../components/common/Navbar';
 import Loader from '../../components/common/Loader';
 import { StatusBadge, TimePicker } from '../../components/ui';
 import { buttonClass } from '../../components/uiClasses';
+import { toast } from 'sonner';
 import {
   createTimesheet,
   getDashboardSummary,
@@ -55,8 +56,6 @@ const SODPage = () => {
   const [summary, setSummary]                 = useState(null);
   const [loading, setLoading]                 = useState(true);
   const [saving, setSaving]                   = useState(false);
-  const [error, setError]                     = useState('');
-  const [message, setMessage]                 = useState('');
 
   const plannedTotal = useMemo(() =>
     rows.reduce((acc, r) => acc + toMinutes(calculateDuration(r.planned_start, r.planned_end)), 0),
@@ -73,7 +72,7 @@ const SODPage = () => {
         setSummary(sRes.data);
         setProjects(pRes.data);
       })
-      .catch(() => setError('Unable to load data.'))
+      .catch(() => toast.error('Unable to load data.'))
       .finally(() => setLoading(false));
   };
 
@@ -87,7 +86,6 @@ const SODPage = () => {
   };
 
   const updateRow = (id, name, value) => {
-    setError(''); setMessage('');
     setRows((cur) => cur.map((r) => {
       if (r.id !== id) return r;
       const updated = { ...r, [name]: value };
@@ -109,9 +107,9 @@ const SODPage = () => {
       !r.planned_start || !r.planned_end ||
       calculateDuration(r.planned_start, r.planned_end) === '—'
     );
-    if (bad) { setError('Fill in all fields with valid planned times.'); return; }
+    if (bad) { toast.error('Fill in all fields with valid planned times.'); return; }
 
-    setSaving(true); setError(''); setMessage('');
+    setSaving(true);
     try {
       for (const r of rows) {
         await createTimesheet({
@@ -127,10 +125,10 @@ const SODPage = () => {
         });
       }
       setRows([emptyRow()]);
-      setMessage('SOD plan saved. Head to EOD at end of day to log actual hours.');
+      toast.success('SOD plan saved. Head to EOD at end of day to log actual hours.');
       loadData(false);
     } catch (err) {
-      setError(getErrorMessage(err.response?.data));
+      toast.error(getErrorMessage(err.response?.data));
     } finally {
       setSaving(false);
     }
@@ -157,8 +155,8 @@ const SODPage = () => {
                     : '—' },
               ].map(({ label, value }) => (
                 <div key={label} className="flex-1 min-w-0 px-5 py-4">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
-                  <p className="mt-1 text-2xl font-black text-slate-950 leading-none">{value}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">{label}</p>
+                  <p className="mt-1 text-2xl font-semibold text-slate-950 leading-none">{value}</p>
                 </div>
               ))}
             </div>
@@ -166,11 +164,11 @@ const SODPage = () => {
             {/* Header row */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-900 text-white shadow-sm">
                   <Sunrise size={17} />
                 </div>
                 <div>
-                  <h1 className="text-base font-bold text-slate-950">Plan Your Day</h1>
+                  <h1 className="text-base font-semibold text-slate-950">Plan Your Day</h1>
                 </div>
               </div>
               <div className="flex items-center gap-1.5 rounded-lg bg-blue-50 border border-blue-200 px-3 py-1.5 text-xs font-semibold text-blue-700">
@@ -179,26 +177,19 @@ const SODPage = () => {
               </div>
             </div>
 
-            {/* Alert */}
-            {(error || message) && (
-              <div className={`rounded-lg border px-4 py-3 text-sm font-medium ${error ? 'border-red-200 bg-red-50 text-red-700' : 'border-blue-200 bg-blue-50 text-blue-700'}`}>
-                {error || message}
-              </div>
-            )}
-
             {/* Desktop View (Table Layout) */}
             <section className="hidden lg:block overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse text-left">
                   <thead>
-                    <tr className="border-b border-slate-200 bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      <th className="py-3.5 px-4 w-[22%]">Project</th>
-                      <th className="py-3.5 px-4 w-[22%]">Milestone</th>
-                      <th className="py-3.5 px-4 w-[28%]">Task Description</th>
-                      <th className="py-3.5 px-4 w-[11%]">Planned Start</th>
-                      <th className="py-3.5 px-4 w-[11%]">Planned End</th>
-                      <th className="py-3.5 px-4 text-center w-[8%]">Duration</th>
-                      <th className="py-3.5 px-4 text-center w-[4%]"></th>
+                    <tr className="bg-blue-900 border-b border-blue-950 text-xs font-semibold uppercase tracking-wider text-white">
+                      <th className="py-3.5 px-4 w-[22%] font-semibold">Project</th>
+                      <th className="py-3.5 px-4 w-[22%] font-semibold">Milestone</th>
+                      <th className="py-3.5 px-4 w-[28%] font-semibold">Task Description</th>
+                      <th className="py-3.5 px-4 w-[11%] font-semibold">Planned Start</th>
+                      <th className="py-3.5 px-4 w-[11%] font-semibold">Planned End</th>
+                      <th className="py-3.5 px-4 text-center w-[8%] font-semibold">Duration</th>
+                      <th className="py-3.5 px-4 text-center w-[4%] font-semibold"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -307,7 +298,7 @@ const SODPage = () => {
                   <div key={row.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md transition duration-200">
                     {/* Card Header: Task Number & Delete Button */}
                     <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-2.5">
-                      <span className="text-xs font-bold uppercase tracking-wider text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
                         Task #{index + 1}
                       </span>
                       <button 
@@ -324,7 +315,7 @@ const SODPage = () => {
                     <div className="space-y-3.5">
                       {/* Project Selector */}
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Project</label>
+                        <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Project</label>
                         <div className="relative rounded-lg border border-slate-200 bg-white shadow-sm focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-500 transition duration-150 ease-in-out">
                           <select 
                             className="w-full bg-transparent px-3 py-2 text-sm outline-none text-slate-800 cursor-pointer appearance-none pr-8"
@@ -344,7 +335,7 @@ const SODPage = () => {
 
                       {/* Milestone Selector */}
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Milestone</label>
+                        <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Milestone</label>
                         <div className="relative rounded-lg border border-slate-200 bg-white shadow-sm focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-500 transition duration-150 ease-in-out">
                           <select 
                             className="w-full bg-transparent px-3 py-2 text-sm outline-none text-slate-800 cursor-pointer appearance-none pr-8 disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
@@ -365,7 +356,7 @@ const SODPage = () => {
 
                       {/* Task Description */}
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Task Description</label>
+                        <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Task Description</label>
                         <div className="relative rounded-lg border border-slate-200 bg-white shadow-sm focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-500 transition duration-150 ease-in-out">
                           <input 
                             className="w-full bg-transparent px-3 py-2 text-sm outline-none text-slate-800 placeholder-slate-400"
@@ -379,11 +370,11 @@ const SODPage = () => {
                       {/* Start and End Times Grid */}
                       <div className="grid grid-cols-2 gap-3.5">
                         <div>
-                          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Start Time</label>
+                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Start Time</label>
                           <TimePicker className="w-full justify-between" value={row.planned_start} onChange={(val) => updateRow(row.id, 'planned_start', val)} />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">End Time</label>
+                          <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">End Time</label>
                           <TimePicker className="w-full justify-between" value={row.planned_end} onChange={(val) => updateRow(row.id, 'planned_end', val)} />
                         </div>
                       </div>
@@ -392,7 +383,7 @@ const SODPage = () => {
                     {/* Card Footer: Planned Duration */}
                     <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
                       <span className="text-xs text-slate-400 font-medium">Estimated Duration:</span>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-bold ${
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold ${
                         duration !== '—' ? 'bg-blue-50 text-blue-700 border border-blue-100' : 'bg-slate-50 text-slate-400 border border-slate-200'
                       }`}>
                         {duration}
@@ -417,7 +408,7 @@ const SODPage = () => {
             {entries.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-bold text-slate-900">Today's Planned Entries</h2>
+                  <h2 className="text-sm font-semibold text-slate-900">Today's Planned Entries</h2>
                   <span className="text-xs text-slate-500 font-medium">{entries.length} {entries.length === 1 ? 'task' : 'tasks'} planned</span>
                 </div>
 
@@ -426,10 +417,10 @@ const SODPage = () => {
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse text-left">
                       <thead>
-                        <tr className="border-b border-slate-200 bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                          <th className="py-3 px-4">Task Details</th>
-                          <th className="py-3 px-4 text-center">Planned Hours</th>
-                          <th className="py-3 px-4">Status</th>
+                        <tr className="bg-blue-900 border-b border-blue-950 text-xs font-semibold uppercase tracking-wider text-white">
+                          <th className="py-3 px-4 font-semibold">Task Details</th>
+                          <th className="py-3 px-4 text-center font-semibold">Planned Hours</th>
+                          <th className="py-3 px-4 font-semibold">Status</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
@@ -483,7 +474,7 @@ const SODPage = () => {
                       <h3 className="font-semibold text-slate-800 text-sm mb-3">{e.task_name}</h3>
                       <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
                         <div>
-                          Planned: <span className="text-blue-700 font-bold">{e.planned_hours}h</span>
+                          Planned: <span className="text-blue-700 font-semibold">{e.planned_hours}h</span>
                         </div>
                       </div>
                     </div>

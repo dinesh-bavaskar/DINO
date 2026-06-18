@@ -4,10 +4,10 @@ const TimesheetTable = ({ entries, emptyText = 'No work logs found.' }) => (
   <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
     <div className="overflow-x-auto">
       <table className="min-w-full border-collapse">
-        <thead className="bg-slate-50">
+        <thead className="bg-blue-900 border-b border-blue-950 relative z-10 shadow-sm text-white">
           <tr>
             {['#', 'Project', 'Milestone', 'Task', 'Planned Hours', 'Actual Hours'].map((header) => (
-              <th key={header} className={thClass}>{header}</th>
+              <th key={header} className={`${thClass} text-white`}>{header}</th>
             ))}
           </tr>
         </thead>

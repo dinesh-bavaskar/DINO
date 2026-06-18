@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Eye, Search, X, Pencil, Check } from 'lucide-react';
+import { useEffect, useMemo, useState, useRef } from 'react';
+import { Eye, Search, X, Pencil, Check, CheckSquare, Square } from 'lucide-react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import Navbar from '../../components/common/Navbar';
 import Loader from '../../components/common/Loader';
@@ -12,6 +12,8 @@ import {
   getMilestonesByProject,
   updateAdminTimesheetDetail,
 } from '../../services/timesheetService';
+import { getEmployees } from '../../services/authService';
+import { toast } from 'sonner';
 
 const initialFilters = { employee: '', date: '', dateTo: '', projectId: '' };
 
@@ -61,11 +63,17 @@ const EmployeeSubmissions = () => {
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [milestonesCache, setMilestonesCache] = useState({});
   const [savingEdit, setSavingEdit] = useState(false);
-  const [editError, setEditError] = useState('');
   const [loading, setLoading] = useState(true);
   const [meta, setMeta] = useState(null);
   const [page, setPage] = useState(1);
   const [projects, setProjects] = useState([]);
+
+  // Multi-select employee states
+  const [empSearch, setEmpSearch] = useState('');
+  const [allEmployees, setAllEmployees] = useState([]);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [selectedEmps, setSelectedEmps] = useState([]);
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -91,6 +99,61 @@ const EmployeeSubmissions = () => {
       })
       .catch(console.error);
   }, []);
+
+  // Fetch all employees or project-specific employees for suggestions
+  useEffect(() => {
+    if (filters.projectId) {
+      getAdminTimesheets({ projectId: filters.projectId, page_size: 5000 })
+        .then(res => {
+          const projectEmpsMap = new Map();
+          (res.data || []).forEach(entry => {
+            if (!projectEmpsMap.has(entry.employee_id)) {
+              projectEmpsMap.set(entry.employee_id, {
+                id: entry.employee_id,
+                employee_id: entry.employee_id,
+                full_name: entry.employee_name,
+                email: entry.employee_email
+              });
+            }
+          });
+          setAllEmployees(Array.from(projectEmpsMap.values()));
+        })
+        .catch(console.error);
+    } else {
+      getEmployees({ page_size: 1000 })
+        .then(res => setAllEmployees(res.data || []))
+        .catch(console.error);
+    }
+  }, [filters.projectId]);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredEmps = useMemo(() => {
+    const query = empSearch.toLowerCase();
+    return allEmployees.filter(emp =>
+      (emp.full_name || '').toLowerCase().includes(query) ||
+      (emp.employee_id || '').toLowerCase().includes(query) ||
+      (emp.email || '').toLowerCase().includes(query)
+    );
+  }, [allEmployees, empSearch]);
+
+  const toggleEmp = (emp) => {
+    setSelectedEmps(prev => {
+      const isSelected = prev.some(e => e.employee_id === emp.employee_id);
+      const newSelected = isSelected ? prev.filter(e => e.employee_id !== emp.employee_id) : [...prev, emp];
+      updateFilter('employee', newSelected.map(e => e.employee_id).join(','));
+      return newSelected;
+    });
+  };
 
   const updateFilter = (name, value) => {
     setPage(1);
@@ -173,50 +236,49 @@ const EmployeeSubmissions = () => {
     for (let i = 0; i < editReport.tasks.length; i++) {
       const t = editReport.tasks[i];
       const rowNum = i + 1;
-      
+
       if (!t.project_name) {
-        setEditError(`Row ${rowNum}: Please select a project.`);
+        toast.error(`Row ${rowNum}: Please select a project.`);
         return;
       }
       if (!t.milestone_name) {
-        setEditError(`Row ${rowNum}: Please select a milestone.`);
+        toast.error(`Row ${rowNum}: Please select a milestone.`);
         return;
       }
       if (!t.task_name.trim()) {
-        setEditError(`Row ${rowNum}: Please enter a task description.`);
+        toast.error(`Row ${rowNum}: Please enter a task description.`);
         return;
       }
       if (!t.planned_start || !t.planned_end) {
-        setEditError(`Row ${rowNum}: Please select planned start and end times.`);
+        toast.error(`Row ${rowNum}: Please select planned start and end times.`);
         return;
       }
       if (calculateDuration(t.planned_start, t.planned_end) === '—') {
-        setEditError(`Row ${rowNum}: Planned start time must be before planned end time.`);
+        toast.error(`Row ${rowNum}: Planned start time must be before planned end time.`);
         return;
       }
       if (!t.actual_start || !t.actual_end) {
-        setEditError(`Row ${rowNum}: Please select actual start and end times.`);
+        toast.error(`Row ${rowNum}: Please select actual start and end times.`);
         return;
       }
       if (calculateDuration(t.actual_start, t.actual_end) === '—') {
-        setEditError(`Row ${rowNum}: Actual start time must be before actual end time.`);
+        toast.error(`Row ${rowNum}: Actual start time must be before actual end time.`);
         return;
       }
     }
 
     setSavingEdit(true);
-    setEditError('');
     updateAdminTimesheetDetail(selected.id, { tasks: editReport.tasks })
       .then((res) => {
         setSelected(res.data);
         setEditReport(res.data);
         setEditingTaskId(null);
         setEntries((prev) => prev.map(e => e.id === res.data.id ? res.data : e));
-        alert('Timesheet details updated successfully.');
+        toast.success('Timesheet details updated successfully.');
       })
       .catch((err) => {
         const msg = err.response?.data?.detail || 'Failed to update timesheet details.';
-        setEditError(msg);
+        toast.error(msg);
       })
       .finally(() => {
         setSavingEdit(false);
@@ -231,25 +293,57 @@ const EmployeeSubmissions = () => {
       <Navbar title="Employee Submissions" subtitle="Review employee timesheet submissions" />
       <main className="flex-1 overflow-auto bg-slate-50 p-4 md:p-7">
         <div className="space-y-5">
-          <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="grid gap-3 lg:grid-cols-[1.2fr_auto_auto_auto]">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                <input className={`${inputClass} pl-9`} placeholder="Filter by employee name, email, or ID" value={filters.employee} onChange={(e) => updateFilter('employee', e.target.value)} />
-              </div>
-              <input className={inputClass} type="date" value={filters.date} onChange={(e) => updateFilter('date', e.target.value)} placeholder="From date" />
-              <input className={inputClass} type="date" value={filters.dateTo} onChange={(e) => updateFilter('dateTo', e.target.value)} placeholder="To date" />
+          <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-md">
+            <div className="grid gap-3 lg:grid-cols-[auto_1.2fr_auto_auto]">
               <select className={inputClass} value={filters.projectId} onChange={(e) => updateFilter('projectId', e.target.value)}>
                 <option value="">All Projects</option>
                 {projects.map((proj) => (
                   <option key={proj.id} value={proj.id}>{proj.name}</option>
                 ))}
               </select>
+              <div className="relative" ref={dropdownRef}>
+                <div className="flex flex-wrap items-center gap-1.5 min-h-[42px] rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm transition focus-within:border-blue-400 focus-within:ring-4 focus-within:ring-blue-100 cursor-text" onClick={() => setIsDropdownOpen(true)}>
+                  <Search className="text-slate-400 shrink-0 ml-1" size={14} />
+                  {selectedEmps.map(emp => (
+                    <span key={emp.employee_id} className="flex items-center gap-1 rounded bg-blue-50 px-1.5 py-0.5 text-blue-700 font-medium">
+                      {emp.full_name}
+                      <button onClick={(e) => { e.stopPropagation(); toggleEmp(emp); }} className="hover:text-blue-900" type="button"><X size={12} /></button>
+                    </span>
+                  ))}
+                  <input
+                    className="flex-1 bg-transparent outline-none min-w-[120px]"
+                    placeholder={selectedEmps.length === 0 ? "Search & select employees..." : ""}
+                    value={empSearch}
+                    onChange={(e) => setEmpSearch(e.target.value)}
+                    onFocus={() => setIsDropdownOpen(true)}
+                  />
+                </div>
+                {isDropdownOpen && (
+                  <div className="absolute top-full left-0 z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg">
+                    {filteredEmps.length > 0 ? filteredEmps.map(emp => {
+                      const isSelected = selectedEmps.some(e => e.employee_id === emp.employee_id);
+                      return (
+                        <div key={emp.employee_id} className="flex cursor-pointer items-center gap-2 px-3 py-2 hover:bg-slate-50" onClick={() => toggleEmp(emp)}>
+                          {isSelected ? <CheckSquare size={16} className="text-blue-600 shrink-0" /> : <Square size={16} className="text-slate-400 shrink-0" />}
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-slate-900 truncate">{emp.full_name} <span className="text-xs text-slate-500">({emp.employee_id})</span></p>
+                            <p className="text-xs text-slate-500 truncate">{emp.email}</p>
+                          </div>
+                        </div>
+                      )
+                    }) : (
+                      <div className="px-3 py-2 text-sm text-slate-500">No employees found.</div>
+                    )}
+                  </div>
+                )}
+              </div>
+              <input className={inputClass} type="date" value={filters.date} onChange={(e) => updateFilter('date', e.target.value)} placeholder="From date" />
+              <input className={inputClass} type="date" value={filters.dateTo} onChange={(e) => updateFilter('dateTo', e.target.value)} placeholder="To date" />
             </div>
           </section>
 
           {loading ? <Loader text="Loading employee submissions..." /> : (
-            <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+            <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-md">
               <div className="overflow-x-auto">
                 <table className="min-w-full table-fixed">
                   <colgroup>
@@ -259,21 +353,21 @@ const EmployeeSubmissions = () => {
                     <col style={{ width: '15%' }} />
                     <col style={{ width: '15%' }} />
                   </colgroup>
-                  <thead className="bg-slate-50">
+                  <thead className="bg-blue-900 border-b border-blue-950 relative z-10 shadow-sm">
                     <tr>
                       {['Employee', 'Projects', 'Date', 'Total Hours'].map((header) => (
-                        <th className={thClass} key={header}>{header}</th>
+                        <th className="px-2.5 py-3 text-left text-xs font-medium uppercase tracking-wide text-white" key={header}>{header}</th>
                       ))}
-                      <th className={`${thClass} text-right`} key="Action">Action</th>
+                      <th className="px-2.5 py-3 text-right text-xs font-medium uppercase tracking-wide text-white" key="Action">Action</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-300">
                     {entries.length === 0 ? (
                       <tr><td className="px-4 py-12 text-center text-sm text-slate-400" colSpan={5}>No submissions found.</td></tr>
-                    ) : entries.map((entry) => {
+                    ) : entries.map((entry, index) => {
                       const isToday = entry.date === todayStr;
                       return (
-                        <tr className={isToday ? "bg-blue-50/40 hover:bg-blue-100/40 transition-colors duration-150" : "hover:bg-slate-50 transition-colors duration-150"} key={entry.id}>
+                        <tr className={`${isToday ? "bg-blue-50/40 hover:bg-blue-100/40" : "hover:bg-slate-50"} transition-colors duration-150`} key={entry.id}>
                           <td className={tdClass}>
                             <p className="font-semibold text-slate-950">{entry.employee_name}</p>
                             <p className="text-xs text-slate-400">{entry.employee_id}</p>
@@ -283,7 +377,7 @@ const EmployeeSubmissions = () => {
                             <div className="flex items-center gap-2">
                               <span>{formatDate(entry.date)}</span>
                               {isToday && (
-                                <span className="inline-flex items-center rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-700">
+                                <span className="inline-flex items-center rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-blue-700">
                                   Today
                                 </span>
                               )}
@@ -318,22 +412,17 @@ const EmployeeSubmissions = () => {
               <div className="relative w-full max-w-6xl mx-4 rounded-xl bg-white shadow-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between p-5 border-b border-slate-200">
                   <div>
-                    <h2 className="text-lg font-bold text-slate-950">Submission Detail</h2>
+                    <h2 className="text-lg font-semibold text-slate-950">Submission Detail</h2>
                     <p className="text-sm text-slate-500">
-                      <span className="font-bold text-slate-900">{selected.employee_name}</span> • {selected.employee_email} • <span className="font-medium text-slate-700">{selected.employee_id}</span>
+                      <span className="font-semibold text-slate-900">{selected.employee_name}</span> • {selected.employee_email} • <span className="font-medium text-slate-700">{selected.employee_id}</span>
                     </p>
                   </div>
-                  <button className="text-slate-400 hover:text-slate-600 transition" onClick={() => { setSelected(null); setEditReport(null); setEditingTaskId(null); setEditError(''); }} type="button">
+                  <button className="text-slate-400 hover:text-slate-600 transition" onClick={() => { setSelected(null); setEditReport(null); setEditingTaskId(null); }} type="button">
                     <X size={20} />
                   </button>
                 </div>
 
                 <div className="p-5">
-                  {editError && (
-                    <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-                      {editError}
-                    </div>
-                  )}
 
                   <div className="overflow-x-auto rounded-lg border border-slate-200">
                     <table className="min-w-full text-sm">
@@ -341,48 +430,48 @@ const EmployeeSubmissions = () => {
                         <tr className="bg-white">
                           <td colSpan={4} className="p-3 pr-1.5 align-top">
                             <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-                              <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Report Date</p>
-                              <p className="mt-1 text-lg font-black text-slate-900">{formatDate(selected.date)}</p>
+                              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Report Date</p>
+                              <p className="mt-1 text-lg font-semibold text-slate-900">{formatDate(selected.date)}</p>
                             </div>
                           </td>
                           <td colSpan={3} className="p-3 px-1.5 align-top">
                             <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3">
-                              <p className="text-[10px] font-bold uppercase tracking-wide text-blue-500">Total Planned Hours</p>
-                              <p className="mt-1 text-lg font-black text-blue-700">{formatHours(calculatedPlannedTotal)}</p>
+                              <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-500">Total Planned Hours</p>
+                              <p className="mt-1 text-lg font-semibold text-blue-700">{formatHours(calculatedPlannedTotal)}</p>
                             </div>
                           </td>
                           <td colSpan={4} className="p-3 pl-1.5 align-top">
                             <div className="rounded-lg border border-orange-100 bg-orange-50 px-4 py-3">
-                              <p className="text-[10px] font-bold uppercase tracking-wide text-orange-500">Total Actual Hours</p>
-                              <p className="mt-1 text-lg font-black text-orange-700">{formatHours(calculatedActualTotal)}</p>
+                              <p className="text-[10px] font-semibold uppercase tracking-wide text-orange-500">Total Actual Hours</p>
+                              <p className="mt-1 text-lg font-semibold text-orange-700">{formatHours(calculatedActualTotal)}</p>
                             </div>
                           </td>
                         </tr>
-                        <tr className="bg-slate-50 border-t border-slate-200">
-                          <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wide text-slate-500" rowSpan={2}>#</th>
-                          <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wide text-slate-500" rowSpan={2}>Project</th>
-                          <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wide text-slate-500" rowSpan={2}>Milestone</th>
-                          <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wide text-slate-500" rowSpan={2}>Task</th>
-                          <th className="px-3 py-2 text-center text-xs font-bold uppercase tracking-wide text-blue-600 border-l border-slate-200" colSpan={3}>SOD Planned Time</th>
-                          <th className="px-3 py-2 text-center text-xs font-bold uppercase tracking-wide text-orange-500 border-l border-slate-200" colSpan={3}>EOD Actual Time</th>
-                          <th className="px-3 py-2.5 text-center text-xs font-bold uppercase tracking-wide text-slate-500" rowSpan={2}>Action</th>
+                        <tr className="bg-blue-50 border-b border-blue-100">
+                          <th className="px-3 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-black" rowSpan={2}>#</th>
+                          <th className="px-3 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-black" rowSpan={2}>Project</th>
+                          <th className="px-3 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-black" rowSpan={2}>Milestone</th>
+                          <th className="px-3 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-black" rowSpan={2}>Task</th>
+                          <th className="px-3 py-2 text-center text-xs font-medium uppercase tracking-wide text-blue-900 border-l border-blue-100" colSpan={3}>SOD Planned Time</th>
+                          <th className="px-3 py-2 text-center text-xs font-medium uppercase tracking-wide text-orange-600 border-l border-blue-100" colSpan={3}>EOD Actual Time</th>
+                          <th className="px-3 py-2.5 text-center text-xs font-medium uppercase tracking-wide text-black" rowSpan={2}>Action</th>
                         </tr>
-                        <tr className="bg-slate-50">
-                          <th className="px-3 py-1.5 text-center text-xs font-semibold text-blue-500 border-l border-slate-200">From</th>
-                          <th className="px-3 py-1.5 text-center text-xs font-semibold text-blue-500">To</th>
-                          <th className="px-3 py-1.5 text-center text-xs font-semibold text-blue-500">Duration</th>
-                          <th className="px-3 py-1.5 text-center text-xs font-semibold text-orange-400 border-l border-slate-200">From</th>
-                          <th className="px-3 py-1.5 text-center text-xs font-semibold text-orange-400">To</th>
-                          <th className="px-3 py-1.5 text-center text-xs font-semibold text-orange-400">Duration</th>
+                        <tr className="bg-blue-50 border-b border-blue-100">
+                          <th className="px-3 py-1.5 text-center text-xs font-medium text-blue-700 border-l border-blue-100">From</th>
+                          <th className="px-3 py-1.5 text-center text-xs font-medium text-blue-700">To</th>
+                          <th className="px-3 py-1.5 text-center text-xs font-medium text-blue-700">Duration</th>
+                          <th className="px-3 py-1.5 text-center text-xs font-medium text-orange-600 border-l border-blue-100">From</th>
+                          <th className="px-3 py-1.5 text-center text-xs font-medium text-orange-600">To</th>
+                          <th className="px-3 py-1.5 text-center text-xs font-medium text-orange-600">Duration</th>
                         </tr>
                       </thead>
                       <tbody>
                         {((editReport && editReport.tasks) || []).map((task, index) => {
                           const isEditing = task.id === editingTaskId;
                           return (
-                            <tr className="border-t border-slate-100" key={task.id}>
+                            <tr className="border-t border-slate-300" key={task.id}>
                               <td className="px-3 py-3 text-sm font-medium text-slate-400">{index + 1}</td>
-                              
+
                               {/* Project */}
                               <td className="px-3 py-3">
                                 {isEditing ? (
@@ -462,7 +551,7 @@ const EmployeeSubmissions = () => {
                               </td>
 
                               {/* Planned Duration */}
-                              <td className="px-3 py-3 text-center font-semibold text-blue-600 bg-blue-50/30">
+                              <td className="px-3 py-3 text-center font-semibold text-blue-900 bg-blue-50/30">
                                 {calculateDuration(task.planned_start, task.planned_end)}
                               </td>
 
@@ -512,7 +601,7 @@ const EmployeeSubmissions = () => {
                                   <button
                                     type="button"
                                     onClick={() => setEditingTaskId(task.id)}
-                                    className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition"
+                                    className="p-1 text-slate-500 hover:text-blue-900 hover:bg-blue-50 rounded transition"
                                     title="Edit row"
                                   >
                                     <Pencil size={14} />
@@ -528,7 +617,7 @@ const EmployeeSubmissions = () => {
                 </div>
 
                 <div className="flex justify-end gap-3 px-5 py-4 border-t border-slate-200">
-                  <button className={buttonClass.outline} onClick={() => { setSelected(null); setEditReport(null); setEditingTaskId(null); setEditError(''); }} type="button">Close</button>
+                  <button className={buttonClass.outline} onClick={() => { setSelected(null); setEditReport(null); setEditingTaskId(null); }} type="button">Close</button>
                   <button
                     className={buttonClass.admin}
                     disabled={savingEdit}

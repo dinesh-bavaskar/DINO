@@ -7,7 +7,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
         fields = [
-            'id', 'employee_id', 'full_name', 'email',
+            'id', 'employee_id', 'full_name', 'email', 'profile_photo',
             'department', 'designation', 'role', 'is_active', 'created_at'
         ]
         read_only_fields = ['id', 'created_at']
@@ -20,7 +20,7 @@ class RegisterEmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
         fields = [
-            'employee_id', 'full_name', 'email',
+            'employee_id', 'full_name', 'email', 'profile_photo',
             'department', 'designation', 'password', 'confirm_password', 'role'
         ]
 
@@ -54,7 +54,7 @@ class UpdateEmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
         fields = [
-            'employee_id', 'full_name', 'email',
+            'employee_id', 'full_name', 'email', 'profile_photo',
             'department', 'designation', 'password', 'confirm_password', 'is_active'
         ]
 

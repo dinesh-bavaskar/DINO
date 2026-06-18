@@ -274,3 +274,17 @@ class EmployeeDetailView(APIView):
             serializer.save()
             return Response(EmployeeSerializer(employee).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        # Check admin role
+        is_superuser = request.user.is_superuser
+        has_admin_role = hasattr(request.auth, 'get') and request.auth.get('role') == 'admin'
+        if not (is_superuser or has_admin_role):
+            return Response({'detail': 'Admin access required.'}, status=status.HTTP_403_FORBIDDEN)
+
+        employee = self.get_employee(pk)
+        if not employee:
+            return Response({'detail': 'Employee not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        employee.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

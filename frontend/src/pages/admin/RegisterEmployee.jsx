@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, UserPlus } from 'lucide-react';
+import { CheckCircle2, UserPlus, UploadCloud, User } from 'lucide-react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import Navbar from '../../components/common/Navbar';
 import { Field } from '../../components/ui';
 import { buttonClass, inputClass } from '../../components/uiClasses';
 import { registerEmployee } from '../../services/authService';
+import { toast } from 'sonner';
 
 const initialForm = {
   employee_id: '',
@@ -16,13 +17,14 @@ const initialForm = {
   password: '',
   confirm_password: '',
   role: 'employee',
+  profile_photo: null,
 };
 
 const RegisterEmployee = () => {
   const [form, setForm] = useState(initialForm);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const navigate = useNavigate();
 
   const [roles] = useState(() => {
@@ -45,36 +47,59 @@ const RegisterEmployee = () => {
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-    setError('');
   };
 
   const validate = () => {
     if (form.password !== form.confirm_password) {
-      setError('Passwords do not match.');
+      toast.error('Passwords do not match.');
       return false;
     }
     if (form.password.length < 6) {
-      setError('Password must be at least 6 characters.');
+      toast.error('Password must be at least 6 characters.');
       return false;
     }
     return true;
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload a valid image file (JPG, JPEG, PNG).');
+      return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Profile photo must be less than 5MB.');
+      return;
+    }
+
+    setForm((prev) => ({ ...prev, profile_photo: file }));
+    setPreviewUrl(URL.createObjectURL(file));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    setError('');
     try {
-      await registerEmployee(form);
+      const formData = new FormData();
+      Object.keys(form).forEach((key) => {
+        if (form[key] !== null && form[key] !== undefined) {
+          formData.append(key, form[key]);
+        }
+      });
+
+      await registerEmployee(formData);
       setSuccess(true);
       setTimeout(() => navigate('/admin/employees'), 1500);
     } catch (err) {
       const errData = err.response?.data;
       if (errData && typeof errData === 'object') {
-        setError(Object.entries(errData).map(([key, value]) => `${key}: ${Array.isArray(value) ? value[0] : value}`).join('\n'));
+        toast.error(Object.entries(errData).map(([key, value]) => `${key}: ${Array.isArray(value) ? value[0] : value}`).join('\n'));
       } else {
-        setError('Registration failed. Please try again.');
+        toast.error(`Registration failed: ${errData || err.message}`);
       }
     } finally {
       setLoading(false);
@@ -88,7 +113,7 @@ const RegisterEmployee = () => {
           <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-emerald-200 bg-emerald-50 text-emerald-600">
             <CheckCircle2 size={46} />
           </div>
-          <h2 className="text-2xl font-bold text-slate-950">Employee Registered!</h2>
+          <h2 className="text-2xl font-semibold text-slate-950">Employee Registered!</h2>
           <p className="text-slate-500">Redirecting to employee list...</p>
         </div>
       </DashboardLayout>
@@ -105,16 +130,35 @@ const RegisterEmployee = () => {
               <UserPlus size={23} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-950">New Employee Registration</h2>
+              <h2 className="text-xl font-semibold text-slate-950">New Employee Registration</h2>
             </div>
           </div>
 
           <form autoComplete="off" className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm" onSubmit={handleSubmit}>
-            <div className="flex items-center gap-2 bg-blue-600 px-6 py-4 text-white">
+            <div className="flex items-center gap-2 bg-blue-900 px-6 py-4 text-white">
               <UserPlus size={18} />
               <p className="text-sm font-semibold">Employee Information Form</p>
             </div>
             <div className="space-y-5 p-6">
+              <div className="mb-6 flex flex-col items-center sm:flex-row sm:items-start gap-6 border-b border-slate-100 pb-6">
+                <div className="flex h-[120px] w-[120px] shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-slate-50 bg-slate-100 shadow-sm">
+                  {previewUrl ? (
+                    <img src={previewUrl} alt="Preview" className="h-full w-full object-cover" />
+                  ) : (
+                    <User size={48} className="text-slate-400" />
+                  )}
+                </div>
+                <div className="flex-1 space-y-2 text-center sm:text-left">
+                  <h3 className="text-sm font-semibold text-slate-900">Profile Photo</h3>
+                  <p className="text-sm text-slate-500">Upload a professional photo for the employee profile. Maximum file size is 5MB. JPG, JPEG, or PNG format.</p>
+                  <label className={`${buttonClass.outline} inline-flex items-center gap-2 cursor-pointer mt-2`}>
+                    <UploadCloud size={16} />
+                    <span>Choose Photo</span>
+                    <input type="file" className="hidden" accept="image/jpeg, image/png, image/jpg" onChange={handleFileChange} />
+                  </label>
+                </div>
+              </div>
+
               <div className="grid gap-4 md:grid-cols-2">
                 <Field label="Employee ID"><input autoComplete="off" className={inputClass} name="employee_id" onChange={handleChange} required value={form.employee_id} /></Field>
                 <Field label="Full Name"><input className={inputClass} name="full_name" onChange={handleChange} required value={form.full_name} /></Field>
@@ -161,8 +205,6 @@ const RegisterEmployee = () => {
                 <Field label="Password"><input autoComplete="new-password" className={inputClass} name="password" onChange={handleChange} required type="password" value={form.password} /></Field>
                 <Field label="Confirm Password"><input autoComplete="new-password" className={inputClass} name="confirm_password" onChange={handleChange} required type="password" value={form.confirm_password} /></Field>
               </div>
-
-              {error && <div className="whitespace-pre-line rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}
 
               <div className="flex flex-col gap-3 sm:flex-row">
                 <button className={buttonClass.outline} onClick={() => navigate('/admin/employees')} type="button">Cancel</button>

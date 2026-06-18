@@ -364,8 +364,8 @@ const Settings = () => {
           <div className="flex flex-col sm:flex-row gap-2 border-b border-slate-200 pb-px">
             <button
               onClick={() => setActiveTab('projects-milestones')}
-              className={`flex items-center gap-2 px-5 py-3 text-sm font-bold border-b-2 transition-all duration-200 outline-none ${activeTab === 'projects-milestones'
-                ? 'border-blue-600 text-blue-600 font-semibold'
+              className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 transition-all duration-200 outline-none ${activeTab === 'projects-milestones'
+                ? 'border-blue-900 text-blue-900 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
                 }`}
               type="button"
@@ -375,25 +375,14 @@ const Settings = () => {
             </button>
             <button
               onClick={() => setActiveTab('timesheet')}
-              className={`flex items-center gap-2 px-5 py-3 text-sm font-bold border-b-2 transition-all duration-200 outline-none ${activeTab === 'timesheet'
-                ? 'border-blue-600 text-blue-600 font-semibold'
+              className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 transition-all duration-200 outline-none ${activeTab === 'timesheet'
+                ? 'border-blue-900 text-blue-900 font-semibold'
                 : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
                 }`}
               type="button"
             >
               <Clock size={16} />
               <span>Timesheet</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('other')}
-              className={`flex items-center gap-2 px-5 py-3 text-sm font-bold border-b-2 transition-all duration-200 outline-none ${activeTab === 'other'
-                ? 'border-blue-600 text-blue-600 font-semibold'
-                : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
-                }`}
-              type="button"
-            >
-              <Sliders size={16} />
-              <span>Other Setting</span>
             </button>
           </div>
 
@@ -402,10 +391,10 @@ const Settings = () => {
               {/* Left Panel - Projects */}
               <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
                 {/* Panel Header */}
-                <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 bg-slate-50/50">
+                <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 bg-white relative z-10 shadow-sm">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900">Projects</h3>
-                    <p className="text-xs text-slate-500">Select a project to view milestones</p>
+                    <h3 className="font-medium text-slate-950 text-base">Projects</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">Select a project to view milestones</p>
                   </div>
                   <button
                     onClick={() => {
@@ -413,7 +402,7 @@ const Settings = () => {
                       setProjectError('');
                       setIsAddProjectOpen(true);
                     }}
-                    className={`${buttonClass.primary} h-9 px-3 text-xs flex items-center gap-1.5`}
+                    className="bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold rounded-md shadow-sm transition h-9 px-3 text-xs flex items-center gap-1.5"
                     id="open-add-project-dialog-btn"
                   >
                     <Plus size={14} /> Add Project
@@ -434,7 +423,7 @@ const Settings = () => {
                           key={project.id}
                           onClick={() => setSelectedProjectId(project.id)}
                           className={`flex items-center justify-between px-5 py-4 cursor-pointer transition-colors ${isSelected
-                            ? 'bg-blue-50/70 border-l-4 border-l-blue-600'
+                            ? 'bg-blue-50/70 border-l-4 border-l-blue-900'
                             : 'hover:bg-slate-50/80 border-l-4 border-l-transparent'
                             }`}
                         >
@@ -455,7 +444,7 @@ const Settings = () => {
                                 checked={project.is_active}
                                 onCheckedChange={() => toggleProjectStatus(project)}
                               />
-                              <span className={`text-[10px] font-bold tracking-wider uppercase ${project.is_active ? 'text-green-600' : 'text-slate-400'}`}>
+                              <span className={`text-[10px] font-semibold tracking-wider uppercase ${project.is_active ? 'text-green-600' : 'text-slate-400'}`}>
                                 {project.is_active ? 'ON' : 'OFF'}
                               </span>
                             </div>
@@ -467,7 +456,7 @@ const Settings = () => {
                                 setProjectError('');
                                 setIsEditProjectOpen(true);
                               }}
-                              className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                              className="p-1.5 text-slate-400 hover:text-blue-900 hover:bg-blue-50 rounded transition-colors"
                               title="Edit Project"
                             >
                               <Pencil size={14} />
@@ -491,13 +480,13 @@ const Settings = () => {
               {/* Right Panel - Milestones */}
               <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
                 {/* Panel Header */}
-                <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 bg-slate-50/50">
+                <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 bg-white relative z-10 shadow-sm">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5 flex-wrap">
+                    <h3 className="font-medium text-slate-950 text-base flex items-center gap-1.5 flex-wrap">
                       {selectedProject ? (
                         <>
                           <span>Milestones —</span>
-                          <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md text-xs font-bold border border-blue-200">
+                          <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md text-xs font-semibold border border-blue-200">
                             {selectedProject.name}
                           </span>
                         </>
@@ -505,7 +494,7 @@ const Settings = () => {
                         'Milestones'
                       )}
                     </h3>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-slate-500 mt-0.5">
                       {selectedProject ? 'Manage milestones linked to this project' : 'Select a project to manage milestones'}
                     </p>
                   </div>
@@ -516,7 +505,7 @@ const Settings = () => {
                       setIsAddMilestoneOpen(true);
                     }}
                     disabled={!selectedProject || !selectedProject.is_active}
-                    className={`${buttonClass.primary} h-9 px-3 text-xs flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed`}
+                    className="bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold rounded-md shadow-sm transition h-9 px-3 text-xs flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                     id="open-add-milestone-dialog-btn"
                   >
                     <Plus size={14} /> Add Milestone
@@ -542,7 +531,7 @@ const Settings = () => {
                             setMilestoneError('');
                             setIsAddMilestoneOpen(true);
                           }}
-                          className="text-xs font-semibold text-blue-600 hover:text-blue-700 underline mt-1"
+                          className="text-xs font-semibold text-blue-900 hover:text-blue-950 underline mt-1"
                         >
                           Create the first milestone
                         </button>
@@ -573,7 +562,7 @@ const Settings = () => {
                               checked={milestone.is_active}
                               onCheckedChange={() => toggleMilestoneStatus(milestone)}
                             />
-                            <span className={`text-[10px] font-bold tracking-wider uppercase ${milestone.is_active ? 'text-green-600' : 'text-slate-400'}`}>
+                            <span className={`text-[10px] font-semibold tracking-wider uppercase ${milestone.is_active ? 'text-green-600' : 'text-slate-400'}`}>
                               {milestone.is_active ? 'ON' : 'OFF'}
                             </span>
                           </div>
@@ -585,7 +574,7 @@ const Settings = () => {
                               setMilestoneError('');
                               setIsEditMilestoneOpen(true);
                             }}
-                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                            className="p-1.5 text-slate-400 hover:text-blue-900 hover:bg-blue-50 rounded transition-colors"
                             title="Edit Milestone"
                           >
                             <Pencil size={14} />
@@ -609,276 +598,272 @@ const Settings = () => {
 
           {/* Timesheet Settings Tab Panel */}
           {activeTab === 'timesheet' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-              {/* Time Window Settings (Top) */}
-              <form onSubmit={handleSaveTimeWindowSettings} className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-6">
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">Timesheet Settings</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Configure Planned and Actual time entry windows for employees.</p>
-                </div>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+                {/* Time Window Settings (Top) */}
+                <form onSubmit={handleSaveTimeWindowSettings} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
+                  <div className="border-b border-slate-200 px-6 py-4 relative z-10 shadow-sm bg-white">
+                    <h3 className="font-medium text-slate-950 text-base">Timesheet Settings</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">Configure Planned and Actual time entry windows for employees.</p>
+                  </div>
 
-                <div className="border-t border-slate-100 pt-5 space-y-5">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Planned Time Window */}
-                    <div className="space-y-3 p-2 rounded-xl bg-slate-50 border border-slate-200/60">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-blue-700">Planned Time Entry Window</h4>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Start Time</label>
-                          <input
-                            type="time"
-                            className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                            value={plannedStart}
-                            onChange={(e) => setPlannedStart(e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">End Time</label>
-                          <input
-                            type="time"
-                            className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                            value={plannedEnd}
-                            onChange={(e) => setPlannedEnd(e.target.value)}
-                            required
-                          />
+                  <div className="p-5 space-y-5 flex-1">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Planned Time Window */}
+                      <div className="space-y-3 p-2 rounded-xl bg-slate-50 border border-slate-200/60">
+                        <h4 className="text-xs font-semibold uppercase tracking-wider text-blue-700">Planned Time Entry Window</h4>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Start Time</label>
+                            <input
+                              type="time"
+                              className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                              value={plannedStart}
+                              onChange={(e) => setPlannedStart(e.target.value)}
+                              required
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">End Time</label>
+                            <input
+                              type="time"
+                              className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                              value={plannedEnd}
+                              onChange={(e) => setPlannedEnd(e.target.value)}
+                              required
+                            />
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Actual Time Window */}
-                    <div className="space-y-3 p-2 rounded-xl bg-slate-50 border border-slate-200/60">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-orange-700">Actual Time Entry Window</h4>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Start Time</label>
-                          <input
-                            type="time"
-                            className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                            value={actualStart}
-                            onChange={(e) => setActualStart(e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">End Time</label>
-                          <input
-                            type="time"
-                            className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                            value={actualEnd}
-                            onChange={(e) => setActualEnd(e.target.value)}
-                            required
-                          />
+                      {/* Actual Time Window */}
+                      <div className="space-y-3 p-2 rounded-xl bg-slate-50 border border-slate-200/60">
+                        <h4 className="text-xs font-semibold uppercase tracking-wider text-orange-700">Actual Time Entry Window</h4>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Start Time</label>
+                            <input
+                              type="time"
+                              className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                              value={actualStart}
+                              onChange={(e) => setActualStart(e.target.value)}
+                              required
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">End Time</label>
+                            <input
+                              type="time"
+                              className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                              value={actualEnd}
+                              onChange={(e) => setActualEnd(e.target.value)}
+                              required
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="border-t border-slate-100 pt-4 flex justify-end">
-                  <button
-                    type="submit"
-                    className={buttonClass.admin}
-                    disabled={savingTimeWindows}
-                  >
-                    {savingTimeWindows ? 'Saving...' : 'Save Timesheet Windows'}
-                  </button>
-                </div>
-              </form>
+                  <div className="border-t border-slate-100 p-5 bg-slate-50/50 flex justify-end mt-auto">
+                    <button
+                      type="submit"
+                      className={buttonClass.admin}
+                      disabled={savingTimeWindows}
+                    >
+                      {savingTimeWindows ? 'Saving...' : 'Save Timesheet Windows'}
+                    </button>
+                  </div>
+                </form>
 
-              {/* Timesheet Configuration (Bottom) */}
-              <form onSubmit={handleSaveTimesheetSettings} className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-6">
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">Timesheet Configuration</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Configure target working hours, timesheet entries, and task types.</p>
-                </div>
+                {/* Timesheet Configuration (Bottom) */}
+                <form onSubmit={handleSaveTimesheetSettings} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
+                  <div className="border-b border-slate-200 px-6 py-4 relative z-10 shadow-sm bg-white">
+                    <h3 className="font-medium text-slate-950 text-base">Timesheet Configuration</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">Configure target working hours, timesheet entries, and task types.</p>
+                  </div>
 
-                <div className="border-t border-slate-100 pt-5 space-y-5">
-                  {/* Target Hours Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className={labelClass}>Daily Target Hours</label>
-                      <input
-                        type="number"
-                        className={inputClass}
-                        value={draftDailyHours}
-                        onChange={(e) => setDraftDailyHours(e.target.value)}
-                        min={1}
-                        max={24}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className={labelClass}>Weekly Target Hours</label>
-                      <input
-                        type="number"
-                        className={inputClass}
-                        value={draftWeeklyHours}
-                        onChange={(e) => setDraftWeeklyHours(e.target.value)}
-                        min={1}
-                        max={168}
-                      />
+                  <div className="p-5 space-y-5 flex-1">
+                    {/* Target Hours Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className={labelClass}>Daily Target Hours</label>
+                        <input
+                          type="number"
+                          className={inputClass}
+                          value={draftDailyHours}
+                          onChange={(e) => setDraftDailyHours(e.target.value)}
+                          min={1}
+                          max={24}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className={labelClass}>Weekly Target Hours</label>
+                        <input
+                          type="number"
+                          className={inputClass}
+                          value={draftWeeklyHours}
+                          onChange={(e) => setDraftWeeklyHours(e.target.value)}
+                          min={1}
+                          max={168}
+                        />
+                      </div>
                     </div>
                   </div>
 
+                  <div className="border-t border-slate-100 p-5 bg-slate-50/50 flex justify-end mt-auto">
+                    <button
+                      type="submit"
+                      className={buttonClass.admin}
+                    >
+                      Save Settings
+                    </button>
+                  </div>
+                </form>
+              </div>
 
-
-
+              {/* System Attributes (Now part of Timesheet Settings) */}
+              <form onSubmit={handleSaveOtherSettings} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden w-full">
+                <div className="border-b border-slate-200 px-6 py-4 relative z-10 shadow-sm bg-white">
+                  <h3 className="font-medium text-slate-950 text-base">System Attributes</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Manage user roles, departments, and designations available in the system.</p>
                 </div>
 
-                <div className="border-t border-slate-100 pt-4 flex justify-end">
+                <div className="p-5 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                  {/* Roles Section */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Roles</label>
+                    <div className="flex gap-2">
+                      <input
+                        className={`${inputClass} flex-1`}
+                        placeholder="Add role..."
+                        value={newRole}
+                        onChange={(e) => setNewRole(e.target.value)}
+                        onKeyDown={(e) => handleInputKeyDown(e, handleAddRole)}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddRole}
+                        className={`${buttonClass.primary} px-5 shrink-0`}
+                      >
+                        Add
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2 p-3 rounded-lg border border-slate-200 bg-slate-50 min-h-[56px]">
+                      {draftRoles.map((role) => (
+                        <span
+                          key={role}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm"
+                        >
+                          {role}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveRole(role)}
+                            className="text-slate-400 hover:text-slate-600 font-semibold leading-none"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                      {draftRoles.length === 0 && (
+                        <span className="text-xs text-slate-400 italic">No roles added</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Departments Section */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Departments</label>
+                    <div className="flex gap-2">
+                      <input
+                        className={`${inputClass} flex-1`}
+                        placeholder="Add department..."
+                        value={newDept}
+                        onChange={(e) => setNewDept(e.target.value)}
+                        onKeyDown={(e) => handleInputKeyDown(e, handleAddDept)}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddDept}
+                        className={`${buttonClass.primary} px-5 shrink-0`}
+                      >
+                        Add
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2 p-3 rounded-lg border border-slate-200 bg-slate-50 min-h-[56px]">
+                      {draftDepartments.map((dept) => (
+                        <span
+                          key={dept}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm"
+                        >
+                          {dept}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveDept(dept)}
+                            className="text-slate-400 hover:text-slate-600 font-semibold leading-none"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                      {draftDepartments.length === 0 && (
+                        <span className="text-xs text-slate-400 italic">No departments added</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Designations Section */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Designations</label>
+                    <div className="flex gap-2">
+                      <input
+                        className={`${inputClass} flex-1`}
+                        placeholder="Add designation..."
+                        value={newDesg}
+                        onChange={(e) => setNewDesg(e.target.value)}
+                        onKeyDown={(e) => handleInputKeyDown(e, handleAddDesg)}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddDesg}
+                        className={`${buttonClass.primary} px-5 shrink-0`}
+                      >
+                        Add
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2 p-3 rounded-lg border border-slate-200 bg-slate-50 min-h-[56px]">
+                      {draftDesignations.map((desg) => (
+                        <span
+                          key={desg}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm"
+                        >
+                          {desg}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveDesg(desg)}
+                            className="text-slate-400 hover:text-slate-600 font-semibold leading-none"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                      {draftDesignations.length === 0 && (
+                        <span className="text-xs text-slate-400 italic">No designations added</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 border-t border-slate-100 p-5 bg-slate-50/50">
                   <button
-                    type="submit"
                     className={buttonClass.admin}
+                    type="submit"
                   >
-                    Save Settings
+                    Save Changes
                   </button>
                 </div>
               </form>
             </div>
-          )}
-
-          {/* Other Settings (System Attributes) Tab Panel */}
-          {activeTab === 'other' && (
-            <form onSubmit={handleSaveOtherSettings} className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-6 max-w-3xl">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">System Attributes</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Manage user roles, departments, and designations available in the system.</p>
-              </div>
-
-              <div className="border-t border-slate-100 pt-5 space-y-6">
-                {/* Roles Section */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Roles</label>
-                  <div className="flex gap-2">
-                    <input
-                      className={`${inputClass} flex-1`}
-                      placeholder="Add role..."
-                      value={newRole}
-                      onChange={(e) => setNewRole(e.target.value)}
-                      onKeyDown={(e) => handleInputKeyDown(e, handleAddRole)}
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddRole}
-                      className={`${buttonClass.primary} px-5 shrink-0`}
-                    >
-                      Add
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-2 p-3 rounded-lg border border-slate-200 bg-slate-50 min-h-[56px]">
-                    {draftRoles.map((role) => (
-                      <span
-                        key={role}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm"
-                      >
-                        {role}
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveRole(role)}
-                          className="text-slate-400 hover:text-slate-600 font-bold leading-none"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                    {draftRoles.length === 0 && (
-                      <span className="text-xs text-slate-400 italic">No roles added</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Departments Section */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Departments</label>
-                  <div className="flex gap-2">
-                    <input
-                      className={`${inputClass} flex-1`}
-                      placeholder="Add department..."
-                      value={newDept}
-                      onChange={(e) => setNewDept(e.target.value)}
-                      onKeyDown={(e) => handleInputKeyDown(e, handleAddDept)}
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddDept}
-                      className={`${buttonClass.primary} px-5 shrink-0`}
-                    >
-                      Add
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-2 p-3 rounded-lg border border-slate-200 bg-slate-50 min-h-[56px]">
-                    {draftDepartments.map((dept) => (
-                      <span
-                        key={dept}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm"
-                      >
-                        {dept}
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveDept(dept)}
-                          className="text-slate-400 hover:text-slate-600 font-bold leading-none"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                    {draftDepartments.length === 0 && (
-                      <span className="text-xs text-slate-400 italic">No departments added</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Designations Section */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Designations</label>
-                  <div className="flex gap-2">
-                    <input
-                      className={`${inputClass} flex-1`}
-                      placeholder="Add designation..."
-                      value={newDesg}
-                      onChange={(e) => setNewDesg(e.target.value)}
-                      onKeyDown={(e) => handleInputKeyDown(e, handleAddDesg)}
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddDesg}
-                      className={`${buttonClass.primary} px-5 shrink-0`}
-                    >
-                      Add
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-2 p-3 rounded-lg border border-slate-200 bg-slate-50 min-h-[56px]">
-                    {draftDesignations.map((desg) => (
-                      <span
-                        key={desg}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm"
-                      >
-                        {desg}
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveDesg(desg)}
-                          className="text-slate-400 hover:text-slate-600 font-bold leading-none"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                    {draftDesignations.length === 0 && (
-                      <span className="text-xs text-slate-400 italic">No designations added</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
-                <button
-                  className={buttonClass.admin}
-                  type="submit"
-                >
-                  Save Changes
-                </button>
-              </div>
-            </form>
           )}
         </div>
       </main>
@@ -887,7 +872,7 @@ const Settings = () => {
       <Dialog open={isAddProjectOpen} onOpenChange={setIsAddProjectOpen}>
         <DialogContent className="sm:max-w-md bg-white">
           <DialogHeader className="border-b border-slate-100 pb-3">
-            <DialogTitle className="text-lg font-bold text-slate-900">Add Project</DialogTitle>
+            <DialogTitle className="text-lg font-semibold text-slate-900">Add Project</DialogTitle>
           </DialogHeader>
           <form onSubmit={addProject} className="space-y-4 py-4">
             <div className="space-y-2">
@@ -933,7 +918,7 @@ const Settings = () => {
       }}>
         <DialogContent className="sm:max-w-md bg-white">
           <DialogHeader className="border-b border-slate-100 pb-3">
-            <DialogTitle className="text-lg font-bold text-slate-900">Edit Project</DialogTitle>
+            <DialogTitle className="text-lg font-semibold text-slate-900">Edit Project</DialogTitle>
           </DialogHeader>
           <form onSubmit={editProject} className="space-y-4 py-4">
             <div className="space-y-2">
@@ -979,7 +964,7 @@ const Settings = () => {
       <Dialog open={isAddMilestoneOpen} onOpenChange={setIsAddMilestoneOpen}>
         <DialogContent className="sm:max-w-md bg-white">
           <DialogHeader className="border-b border-slate-100 pb-3">
-            <DialogTitle className="text-lg font-bold text-slate-900">Add Milestone</DialogTitle>
+            <DialogTitle className="text-lg font-semibold text-slate-900">Add Milestone</DialogTitle>
           </DialogHeader>
           <form onSubmit={addMilestone} className="space-y-4 py-4">
             <div className="space-y-2">
@@ -1033,7 +1018,7 @@ const Settings = () => {
       }}>
         <DialogContent className="sm:max-w-md bg-white">
           <DialogHeader className="border-b border-slate-100 pb-3">
-            <DialogTitle className="text-lg font-bold text-slate-900">Edit Milestone</DialogTitle>
+            <DialogTitle className="text-lg font-semibold text-slate-900">Edit Milestone</DialogTitle>
           </DialogHeader>
           <form onSubmit={editMilestone} className="space-y-4 py-4">
             <div className="space-y-2">

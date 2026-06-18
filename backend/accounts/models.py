@@ -16,6 +16,7 @@ class Employee(models.Model):
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='employee')
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    profile_photo = models.ImageField(upload_to='profiles/', null=True, blank=True)
 
     class Meta:
         ordering = ['-created_at']

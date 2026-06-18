@@ -57,12 +57,12 @@ const Sidebar = () => {
         {/* Logo */}
         <div className={`flex h-16 items-center gap-3 border-b border-blue-900/50 px-4 ${isCollapsed ? 'justify-center' : ''
           }`}>
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-white/[0.12] text-white">
             <Building2 size={19} />
           </div>
           {!isCollapsed && (
             <div className="min-w-0">
-              <p className="text-sm font-black text-white truncate">EmpManager</p>
+              <p className="text-sm font-semibold text-white truncate">EmpManager</p>
               <p className="text-[11px] text-blue-300 truncate">{user?.role === 'admin' ? 'Administrator' : 'Employee Portal'}</p>
             </div>
           )}
@@ -88,7 +88,7 @@ const Sidebar = () => {
                     ? 'justify-center p-2.5'
                     : 'gap-3 px-3 py-2.5 text-left text-sm'
                     } ${active
-                      ? 'bg-blue-600 font-semibold text-white shadow-sm'
+                      ? 'bg-white/[0.12] font-semibold text-white shadow-sm'
                       : 'font-medium text-blue-100 hover:bg-blue-900/40 hover:text-white'
                     }`}
                 >

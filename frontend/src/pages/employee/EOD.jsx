@@ -5,6 +5,7 @@ import DashboardLayout from '../../layouts/DashboardLayout';
 import Navbar from '../../components/common/Navbar';
 import Loader from '../../components/common/Loader';
 import { StatusBadge, TimePicker } from '../../components/ui';
+import { toast } from 'sonner';
 import {
   getDashboardSummary,
   getTodayTimesheets,
@@ -45,8 +46,6 @@ const EODPage = () => {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
 
   const actualTotal = useMemo(() =>
     eodRows.reduce((acc, r) => acc + toMinutes(calculateDuration(r.actual_start, r.actual_end)), 0),
@@ -75,29 +74,28 @@ const EODPage = () => {
           task_status: 'Completed',
         })));
       })
-      .catch(() => setError('Unable to load data.'))
+      .catch(() => toast.error('Unable to load data.'))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => { loadData(); }, []);
 
   const updateRow = (id, name, value) => {
-    setError(''); setMessage('');
     setEodRows((cur) => cur.map((r) => r.id === id ? { ...r, [name]: value } : r));
   };
 
   const handleSubmit = async () => {
     if (eodRows.length === 0) {
-      setError('No draft entries to submit. Log your plan in SOD first.');
+      toast.error('No draft entries to submit. Log your plan in SOD first.');
       return;
     }
     const bad = eodRows.find((r) =>
       !r.actual_start || !r.actual_end ||
       calculateDuration(r.actual_start, r.actual_end) === '—'
     );
-    if (bad) { setError('Fill in actual start and end times for every task.'); return; }
+    if (bad) { toast.error('Fill in actual start and end times for every task.'); return; }
 
-    setSaving(true); setError(''); setMessage('');
+    setSaving(true);
     try {
       for (const r of eodRows) {
         await updateTimesheet(r.id, {
@@ -113,10 +111,10 @@ const EODPage = () => {
         });
         await setTimesheetSubmissionStatus(r.id, 'submitted');
       }
-      setMessage('EOD report submitted successfully!');
+      toast.success('EOD report submitted successfully!');
       loadData(false);
     } catch (err) {
-      setError(getErrorMessage(err.response?.data));
+      toast.error(getErrorMessage(err.response?.data));
     } finally {
       setSaving(false);
     }
@@ -141,8 +139,8 @@ const EODPage = () => {
                 { label: 'Drafts Left', value: eodRows.length },
               ].map(({ label, value }) => (
                 <div key={label} className="flex-1 min-w-0 px-5 py-4">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
-                  <p className="mt-1 text-2xl font-black text-slate-950 leading-none">{value}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">{label}</p>
+                  <p className="mt-1 text-2xl font-semibold text-slate-950 leading-none">{value}</p>
                 </div>
               ))}
             </div>
@@ -154,7 +152,7 @@ const EODPage = () => {
                   <Sunset size={17} />
                 </div>
                 <div>
-                  <h1 className="text-base font-bold text-slate-950">Log Actual Hours</h1>
+                  <h1 className="text-base font-semibold text-slate-950">Log Actual Hours</h1>
                 </div>
               </div>
               <div className="flex items-center gap-1.5 rounded-lg bg-orange-50 border border-orange-200 px-3 py-1.5 text-xs font-semibold text-orange-700">
@@ -163,13 +161,6 @@ const EODPage = () => {
               </div>
             </div>
 
-            {/* Alert */}
-            {(error || message) && (
-              <div className={`rounded-lg border px-4 py-3 text-sm font-medium ${error ? 'border-red-200 bg-red-50 text-red-700' : 'border-green-200 bg-green-50 text-green-700'}`}>
-                {error || message}
-              </div>
-            )}
-
             {/* EOD table or empty state */}
             {eodRows.length === 0 ? (
               <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white py-16 text-center shadow-sm">
@@ -177,7 +168,7 @@ const EODPage = () => {
                 <p className="text-sm font-semibold text-slate-600">No draft entries to update</p>
                 <p className="mt-1 text-xs text-slate-400">Save your SOD plan first, then come back here at end of day.</p>
                 <button
-                  className="mt-5 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                  className="mt-5 inline-flex items-center gap-2 rounded-lg bg-blue-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-950"
                   onClick={() => navigate('/employee/sod')}
                   type="button"
                 >
@@ -191,13 +182,13 @@ const EODPage = () => {
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse text-left">
                       <thead>
-                        <tr className="border-b border-slate-200 bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                          <th className="py-3.5 px-4">Task Details</th>
-                          <th className="py-3.5 px-4 text-center">Planned</th>
-                          <th className="py-3.5 px-4">Actual Start</th>
-                          <th className="py-3.5 px-4">Actual End</th>
-                          <th className="py-3.5 px-4 text-center">Duration</th>
-                          <th className="py-3.5 px-4">Status</th>
+                        <tr className="bg-blue-900 border-b border-blue-950 text-xs font-semibold uppercase tracking-wider text-white">
+                          <th className="py-3.5 px-4 font-semibold">Task Details</th>
+                          <th className="py-3.5 px-4 text-center font-semibold">Planned</th>
+                          <th className="py-3.5 px-4 font-semibold">Actual Start</th>
+                          <th className="py-3.5 px-4 font-semibold">Actual End</th>
+                          <th className="py-3.5 px-4 text-center font-semibold">Duration</th>
+                          <th className="py-3.5 px-4 font-semibold">Status</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
@@ -233,7 +224,7 @@ const EODPage = () => {
                                 <TimePicker className="w-full justify-between" value={row.actual_end} onChange={(val) => updateRow(row.id, 'actual_end', val)} />
                               </td>
                               <td className="py-4 px-4 text-center align-middle">
-                                <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold ${
+                                <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ${
                                   actualDur !== '—' ? 'bg-orange-50 text-orange-700 border border-orange-200' : 'bg-slate-50 text-slate-400 border border-slate-200'
                                 }`}>
                                   {actualDur}
@@ -314,11 +305,11 @@ const EODPage = () => {
                         {/* Card Body: Inputs */}
                         <div className="grid grid-cols-2 gap-3.5">
                           <div>
-                            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Actual Start</label>
+                            <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Actual Start</label>
                             <TimePicker className="w-full justify-between" value={row.actual_start} onChange={(val) => updateRow(row.id, 'actual_start', val)} />
                           </div>
                           <div>
-                            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Actual End</label>
+                            <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Actual End</label>
                             <TimePicker className="w-full justify-between" value={row.actual_end} onChange={(val) => updateRow(row.id, 'actual_end', val)} />
                           </div>
                         </div>
@@ -334,7 +325,7 @@ const EODPage = () => {
                           </div>
                           <div className="flex items-center gap-1.5">
                             <span className="text-xs text-slate-400 font-medium">Duration:</span>
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-bold ${
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold ${
                               actualDur !== '—' ? 'bg-orange-50 text-orange-700 border border-orange-200' : 'bg-slate-50 text-slate-400 border border-slate-200'
                             }`}>
                               {actualDur}
@@ -365,7 +356,7 @@ const EODPage = () => {
             {entries.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-bold text-slate-900">Today's Submissions</h2>
+                  <h2 className="text-sm font-semibold text-slate-900">Today's Submissions</h2>
                   <span className="text-xs text-slate-500 font-medium">{entries.length} {entries.length === 1 ? 'entry' : 'entries'} submitted</span>
                 </div>
 
@@ -374,11 +365,11 @@ const EODPage = () => {
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse text-left">
                       <thead>
-                        <tr className="border-b border-slate-200 bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                          <th className="py-3 px-4">Task Details</th>
-                          <th className="py-3 px-4 text-center">Planned</th>
-                          <th className="py-3 px-4 text-center">Actual</th>
-                          <th className="py-3 px-4">Status</th>
+                        <tr className="bg-blue-900 border-b border-blue-950 text-xs font-semibold uppercase tracking-wider text-white">
+                          <th className="py-3 px-4 font-semibold">Task Details</th>
+                          <th className="py-3 px-4 text-center font-semibold">Planned</th>
+                          <th className="py-3 px-4 text-center font-semibold">Actual</th>
+                          <th className="py-3 px-4 font-semibold">Status</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
@@ -438,7 +429,7 @@ const EODPage = () => {
                           Planned: <span className="text-slate-700 font-semibold">{e.planned_hours}h</span>
                         </div>
                         <div>
-                          Actual: <span className="text-orange-600 font-bold">{e.actual_hours}h</span>
+                          Actual: <span className="text-orange-600 font-semibold">{e.actual_hours}h</span>
                         </div>
                       </div>
                     </div>

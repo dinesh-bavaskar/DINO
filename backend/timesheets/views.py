@@ -313,11 +313,16 @@ class AdminTimesheetListView(AdminOnlyMixin, APIView):
         status_filter = request.query_params.get('status')
 
         if employee:
-            reports = reports.filter(
-                Q(employee__employee_id__icontains=employee) |
-                Q(employee__full_name__icontains=employee) |
-                Q(employee__email__icontains=employee)
-            )
+            employee_list = [e.strip() for e in employee.split(',') if e.strip()]
+            if employee_list:
+                q_objects = Q()
+                for emp in employee_list:
+                    q_objects |= (
+                        Q(employee__employee_id__icontains=emp) |
+                        Q(employee__full_name__icontains=emp) |
+                        Q(employee__email__icontains=emp)
+                    )
+                reports = reports.filter(q_objects)
         # Date range filtering
         if date_from:
             reports = reports.filter(date__gte=date_from)

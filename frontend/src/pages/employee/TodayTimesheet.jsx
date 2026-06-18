@@ -5,6 +5,7 @@ import Navbar from '../../components/common/Navbar';
 import Loader from '../../components/common/Loader';
 import { StatusBadge, TimePicker } from '../../components/ui';
 import { buttonClass } from '../../components/uiClasses';
+import { toast } from 'sonner';
 import {
   createTimesheet,
   deleteTimesheet,
@@ -121,8 +122,6 @@ const TimesheetPage = () => {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
   const [settings, setSettings] = useState(null);
 
   const [localSettings, setLocalSettings] = useState(() => {
@@ -264,7 +263,7 @@ const TimesheetPage = () => {
           setSavedTasks([]);
         }
       })
-      .catch(() => setError('Unable to load today\'s timesheet.'))
+      .catch(() => toast.error('Unable to load today\'s timesheet.'))
       .finally(() => setLoading(false));
   };
 
@@ -273,17 +272,12 @@ const TimesheetPage = () => {
   // Real-time validation for time overlaps
   useEffect(() => {
     if (overlapIds?.planned?.size > 0 || overlapIds?.actual?.size > 0) {
-      setError('Time overlap detected. Please select a non-overlapping time slot.');
-    } else {
-      setError((prev) =>
-        prev === 'Time overlap detected. Please select a non-overlapping time slot.' || prev === 'Time overlap detected. Please adjust task timings before saving.' ? '' : prev
-      );
+      toast.error('Time overlap detected. Please select a non-overlapping time slot.');
     }
   }, [overlapIds]);
 
   /* ── row operations ──────────────────────────────────────── */
   const updateRow = (rowId, name, value) => {
-    setError(''); setMessage('');
     setRows((cur) => cur.map((row) => {
       if (row.id !== rowId) return row;
       const updated = { ...row, [name]: value };
@@ -297,8 +291,6 @@ const TimesheetPage = () => {
   };
 
   const addTask = () => {
-    setError('');
-    setMessage('');
     setRows((cur) => [...cur, emptyRow()]);
   };
 
@@ -308,24 +300,24 @@ const TimesheetPage = () => {
       return;
     }
     if (!window.confirm('Delete this timesheet entry?')) return;
-    setError(''); setMessage('');
     try {
       await deleteTimesheet(row.id);
       loadData(false);
+      toast.success('Timesheet entry deleted.');
     } catch {
-      setError('Unable to delete timesheet entry.');
+      toast.error('Unable to delete timesheet entry.');
     }
   };
 
   /* ── validations ─────────────────────────────────────────── */
   const validateRows = (isAutoSave = false) => {
     if (rows.length === 0) {
-      if (!isAutoSave) setError('No tasks to save.');
+      if (!isAutoSave) toast.error('No tasks to save.');
       return false;
     }
 
     if (!localSettings.allowOverlap && findTimeOverlap(rows)) {
-      if (!isAutoSave) setError('Time overlap detected. Please adjust task timings before saving.');
+      if (!isAutoSave) toast.error('Time overlap detected. Please adjust task timings before saving.');
       return false;
     }
 
@@ -336,15 +328,15 @@ const TimesheetPage = () => {
       const rowNum = i + 1;
 
       if (!r.project_name) {
-        if (!isAutoSave) setError(`Row ${rowNum}: Please select a project.`);
+        if (!isAutoSave) toast.error(`Row ${rowNum}: Please select a project.`);
         return false;
       }
       if (localSettings.requireMilestone && !r.milestone_name) {
-        if (!isAutoSave) setError(`Row ${rowNum}: Please select a milestone.`);
+        if (!isAutoSave) toast.error(`Row ${rowNum}: Please select a milestone.`);
         return false;
       }
       if (!r.task_name.trim()) {
-        if (!isAutoSave) setError(`Row ${rowNum}: Please enter a task description.`);
+        if (!isAutoSave) toast.error(`Row ${rowNum}: Please enter a task description.`);
         return false;
       }
 
@@ -357,34 +349,34 @@ const TimesheetPage = () => {
 
       if (hasPlanned) {
         if (!r.planned_start || !r.planned_end) {
-          if (!isAutoSave) setError(`Row ${rowNum}: Please select both planned start and end times, or leave both empty.`);
+          if (!isAutoSave) toast.error(`Row ${rowNum}: Please select both planned start and end times, or leave both empty.`);
           return false;
         }
         if (calculateDuration(r.planned_start, r.planned_end) === '—') {
-          if (!isAutoSave) setError(`Row ${rowNum}: Planned start time must be before planned end time.`);
+          if (!isAutoSave) toast.error(`Row ${rowNum}: Planned start time must be before planned end time.`);
           return false;
         }
       }
 
       if (hasActual) {
         if (!r.actual_start || !r.actual_end) {
-          if (!isAutoSave) setError(`Row ${rowNum}: Please select both actual start and end times, or leave both empty.`);
+          if (!isAutoSave) toast.error(`Row ${rowNum}: Please select both actual start and end times, or leave both empty.`);
           return false;
         }
         if (calculateDuration(r.actual_start, r.actual_end) === '—') {
-          if (!isAutoSave) setError(`Row ${rowNum}: Actual start time must be before actual end time.`);
+          if (!isAutoSave) toast.error(`Row ${rowNum}: Actual start time must be before actual end time.`);
           return false;
         }
       }
     }
 
     if (!hasAnyTime) {
-      if (!isAutoSave) setError('Please enter at least Planned Time or Actual Time for your tasks.');
+      if (!isAutoSave) toast.error('Please enter at least Planned Time or Actual Time for your tasks.');
       return false;
     }
 
     if (actualTotal > targetMinutes) {
-      if (!isAutoSave) setError(`Daily total actual hours must not exceed ${dailyTargetHours} hours.`);
+      if (!isAutoSave) toast.error(`Daily total actual hours must not exceed ${dailyTargetHours} hours.`);
       return false;
     }
 
@@ -408,7 +400,7 @@ const TimesheetPage = () => {
     }
 
     if (!validateRows(isAutoSave)) return;
-    if (!isAutoSave) { setSaving(true); setError(''); setMessage(''); }
+    if (!isAutoSave) { setSaving(true); }
 
     try {
       let createdIds = {};
@@ -440,14 +432,20 @@ const TimesheetPage = () => {
         // Auto-save occurs silently without notifying the user
         getDashboardSummary().then(res => setSummary(res.data)).catch(() => { });
       } else {
-        setMessage('Timesheet Saved Successfully.');
+        toast.success('Timesheet saved successfully.', {
+          position: 'top-right',
+          duration: 3500,
+          className: 'bg-green-500 text-white border-none shadow-lg',
+        });
         await loadData(false);
       }
     } catch (err) {
       if (!isAutoSave) {
-        setError(getErrorMessage(err.response?.data));
-      } else {
-        setError('Auto-save failed: ' + getErrorMessage(err.response?.data));
+        toast.error('Failed to save timesheet. Please try again.', {
+          position: 'top-right',
+          duration: 3500,
+          className: 'bg-red-500 text-white border-none shadow-lg',
+        });
       }
     } finally {
       if (!isAutoSave) setSaving(false);
@@ -495,7 +493,7 @@ const TimesheetPage = () => {
                 },
               ].map(({ label, value }) => (
                 <div key={label} className="flex-1 min-w-0 px-5 py-4">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">{label}</p>
                   <p className="mt-1 text-2xl font-medium text-slate-950 leading-none">{value}</p>
                 </div>
               ))}
@@ -503,16 +501,6 @@ const TimesheetPage = () => {
 
             {/* ── Table Card ── */}
             <div className="space-y-4">
-              {error && (
-                <div className="rounded-md bg-red-50 p-3 text-sm font-medium text-red-700 border border-red-200">
-                  {error}
-                </div>
-              )}
-              {message && (
-                <div className="rounded-md bg-green-50 p-3 text-sm font-medium text-green-700 border border-green-200">
-                  {message}
-                </div>
-              )}
               <div>
                 {settings && (
                   <div className="flex w-full text-xs font-normal text-slate-500 pb-1.5">
@@ -553,11 +541,11 @@ const TimesheetPage = () => {
                         <col className="w-[4%]" />
                       </colgroup>
                       <thead>
-                        <tr className="bg-blue-950 border-b border-blue-900">
-                          <th className="border-r border-blue-900 px-3 py-2 text-xs font-bold text-slate-200" rowSpan={2}>Project</th>
-                          <th className="border-r border-blue-900 px-3 py-2 text-xs font-bold text-slate-200" rowSpan={2}>Milestone</th>
-                          <th className="border-r border-blue-900 px-3 py-2 text-xs font-bold text-slate-200" rowSpan={2}>Task Description</th>
-                          <th className={`relative border-r border-blue-900 px-2 py-1.5 text-center text-xs font-normal text-white ${!isPlannedEditable ? 'opacity-80 bg-blue-900/50' : ''}`} colSpan={3}>
+                        <tr className="bg-blue-900 border-b border-blue-950">
+                          <th className="border-r border-blue-900 px-3 py-2 text-xs font-semibold text-slate-200" rowSpan={2}>Project</th>
+                          <th className="border-r border-blue-900 px-3 py-2 text-xs font-semibold text-slate-200" rowSpan={2}>Milestone</th>
+                          <th className="border-r border-blue-900 px-3 py-2 text-xs font-semibold text-slate-200" rowSpan={2}>Task Description</th>
+                          <th className="font-semibold" className={`relative border-r border-blue-900 px-2 py-1.5 text-center text-xs font-normal text-white ${!isPlannedEditable ? 'opacity-80 bg-blue-900/50' : ''}`} colSpan={3}>
                             <div className="flex items-center justify-center gap-1.5">
                               Planned Time <span className={`inline-flex items-center justify-center px-1 text-[11px] font-normal ${plannedTotal < targetMinutes ? 'text-red-400' : 'text-green-400'}`}>{formatTotal(plannedTotal)} / {dailyTargetHours}h</span>
                               {!isPlannedEditable && (
@@ -570,7 +558,7 @@ const TimesheetPage = () => {
                               )}
                             </div>
                           </th>
-                          <th className={`relative border-r border-blue-900 px-2 py-1.5 text-center text-xs font-normal text-white ${!isActualEditable ? 'opacity-80 bg-blue-900/50' : ''}`} colSpan={3}>
+                          <th className="font-semibold" className={`relative border-r border-blue-900 px-2 py-1.5 text-center text-xs font-normal text-white ${!isActualEditable ? 'opacity-80 bg-blue-900/50' : ''}`} colSpan={3}>
                             <div className="flex items-center justify-center gap-1.5">
                               Actual Time <span className={`inline-flex items-center justify-center px-1 text-[11px] font-normal ${actualTotal < targetMinutes ? 'text-red-400' : 'text-green-400'}`}>{formatTotal(actualTotal)} / {dailyTargetHours}h</span>
                               {!isActualEditable && (
@@ -583,15 +571,15 @@ const TimesheetPage = () => {
                               )}
                             </div>
                           </th>
-                          <th className="px-1 py-2" rowSpan={2} />
+                          <th className="px-1 py-2 font-semibold" rowSpan={2} />
                         </tr>
-                        <tr className="bg-blue-950 border-b border-blue-900">
-                          <th className={`border-r border-blue-900 px-2 py-1 text-center text-[10px] font-bold text-white ${!isPlannedEditable ? 'opacity-60 bg-blue-900/50' : ''}`}>From</th>
-                          <th className={`border-r border-blue-900 px-2 py-1 text-center text-[10px] font-bold text-white ${!isPlannedEditable ? 'opacity-60 bg-blue-900/50' : ''}`}>To</th>
-                          <th className={`border-r border-blue-900 px-2 py-1 text-center text-[10px] font-bold text-white ${!isPlannedEditable ? 'opacity-60 bg-blue-900/50' : ''}`}>Dur</th>
-                          <th className={`border-r border-blue-900 px-2 py-1 text-center text-[10px] font-bold text-white ${!isActualEditable ? 'opacity-60 bg-blue-900/50' : ''}`}>From</th>
-                          <th className={`border-r border-blue-900 px-2 py-1 text-center text-[10px] font-bold text-white ${!isActualEditable ? 'opacity-60 bg-blue-900/50' : ''}`}>To</th>
-                          <th className={`border-r border-blue-900 px-2 py-1 text-center text-[10px] font-bold text-white ${!isActualEditable ? 'opacity-60 bg-blue-900/50' : ''}`}>Dur</th>
+                        <tr className="bg-blue-900 border-b border-blue-950">
+                          <th className={`border-r border-blue-900 px-2 py-1 text-center text-[10px] font-semibold text-white ${!isPlannedEditable ? 'opacity-60 bg-blue-900/50' : ''}`}>From</th>
+                          <th className={`border-r border-blue-900 px-2 py-1 text-center text-[10px] font-semibold text-white ${!isPlannedEditable ? 'opacity-60 bg-blue-900/50' : ''}`}>To</th>
+                          <th className={`border-r border-blue-900 px-2 py-1 text-center text-[10px] font-semibold text-white ${!isPlannedEditable ? 'opacity-60 bg-blue-900/50' : ''}`}>Dur</th>
+                          <th className={`border-r border-blue-900 px-2 py-1 text-center text-[10px] font-semibold text-white ${!isActualEditable ? 'opacity-60 bg-blue-900/50' : ''}`}>From</th>
+                          <th className={`border-r border-blue-900 px-2 py-1 text-center text-[10px] font-semibold text-white ${!isActualEditable ? 'opacity-60 bg-blue-900/50' : ''}`}>To</th>
+                          <th className={`border-r border-blue-900 px-2 py-1 text-center text-[10px] font-semibold text-white ${!isActualEditable ? 'opacity-60 bg-blue-900/50' : ''}`}>Dur</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -679,7 +667,7 @@ const TimesheetPage = () => {
                               </td>
 
                               {/* Planned Dur */}
-                              <td className={`border-r border-slate-200 px-2 py-2 text-center text-xs font-bold text-blue-700 ${!isPlannedEditable ? 'opacity-60 bg-slate-50/50' : ''}`}>
+                              <td className={`border-r border-slate-200 px-2 py-2 text-center text-xs font-semibold text-blue-700 ${!isPlannedEditable ? 'opacity-60 bg-slate-50/50' : ''}`}>
                                 {calculateDuration(row.planned_start, row.planned_end)}
                               </td>
 
@@ -704,7 +692,7 @@ const TimesheetPage = () => {
                               </td>
 
                               {/* Actual Dur */}
-                              <td className={`border-r border-slate-200 px-2 py-2 text-center text-xs font-bold text-orange-600 ${!isActualEditable ? 'opacity-60 bg-slate-50/50' : ''}`}>
+                              <td className={`border-r border-slate-200 px-2 py-2 text-center text-xs font-semibold text-orange-600 ${!isActualEditable ? 'opacity-60 bg-slate-50/50' : ''}`}>
                                 {calculateDuration(row.actual_start, row.actual_end)}
                               </td>
 
@@ -741,9 +729,9 @@ const TimesheetPage = () => {
                 </button>
                 <div className="flex flex-wrap gap-2.5">
                   <button
-                    className={`${buttonClass.primary} min-h-10 bg-blue-600 hover:bg-blue-700`}
+                    className={`${buttonClass.primary} min-h-10 bg-blue-900 hover:bg-blue-950`}
                     disabled={saving}
-                    onClick={handleSaveTimesheet}
+                    onClick={() => handleSaveTimesheet(false)}
                     type="button"
                   >
                     <Save size={15} className="mr-1.5" /> Save Timesheet
