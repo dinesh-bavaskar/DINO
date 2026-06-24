@@ -15,7 +15,18 @@ import {
 import { getEmployees } from '../../services/authService';
 import { toast } from 'sonner';
 
-const initialFilters = { employee: '', date: '', dateTo: '', projectId: '' };
+const getTodayStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+const getDaysAgoStr = (days) => {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+const initialFilters = { employee: '', date: getDaysAgoStr(7), dateTo: getTodayStr(), projectId: '' };
 
 const formatTimeAMPM = (timeStr) => {
   if (!timeStr) return '—';

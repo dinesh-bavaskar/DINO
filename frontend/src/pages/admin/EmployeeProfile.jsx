@@ -23,6 +23,23 @@ const formatDate = (dateStr) => {
   return `${parts[2]}-${parts[1]}-${parts[0]}`;
 };
 
+const formatShortDate = (dateStr) => {
+  const full = formatDate(dateStr);
+  if (full === 'N/A') return 'N/A';
+  return `${full.substring(0, 2)}-${full.substring(3, 5)}-${full.substring(8, 10)}`;
+};
+
+const getTodayStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+const getDaysAgoStr = (days) => {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 const EmployeeProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -31,14 +48,13 @@ const EmployeeProfile = () => {
   const [loading, setLoading] = useState(true);
 
   // Filters for Timesheet History
-  const [filterDate, setFilterDate] = useState('');
+  const [historyStartDate, setHistoryStartDate] = useState(getDaysAgoStr(7));
+  const [historyEndDate, setHistoryEndDate] = useState(getTodayStr());
   const [filterProject, setFilterProject] = useState('');
-  const [filterMonth, setFilterMonth] = useState('');
 
   // Filters for Trend Graph
-  const [graphFilter, setGraphFilter] = useState('7'); // '7', '15', '30', 'custom'
-  const [graphStartDate, setGraphStartDate] = useState('');
-  const [graphEndDate, setGraphEndDate] = useState('');
+  const [graphStartDate, setGraphStartDate] = useState(getDaysAgoStr(7));
+  const [graphEndDate, setGraphEndDate] = useState(getTodayStr());
 
   useEffect(() => {
     let mounted = true;
@@ -203,19 +219,17 @@ const EmployeeProfile = () => {
     let startLimit = null;
     let endLimit = new Date(today); // By default include up to today
 
-    if (graphFilter === '7') {
-      startLimit = new Date(today);
-      startLimit.setDate(today.getDate() - 6);
-    } else if (graphFilter === '15') {
-      startLimit = new Date(today);
-      startLimit.setDate(today.getDate() - 14);
-    } else if (graphFilter === '30') {
-      startLimit = new Date(today);
-      startLimit.setDate(today.getDate() - 29);
-    } else if (graphFilter === 'custom') {
-      if (graphStartDate) startLimit = new Date(graphStartDate);
-      if (graphEndDate) {
-        endLimit = new Date(graphEndDate);
+    if (graphStartDate) {
+      const parts = graphStartDate.split('-');
+      if (parts.length === 3) {
+        startLimit = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        startLimit.setHours(0, 0, 0, 0);
+      }
+    }
+    if (graphEndDate) {
+      const parts = graphEndDate.split('-');
+      if (parts.length === 3) {
+        endLimit = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
         endLimit.setHours(23, 59, 59, 999);
       }
     }
@@ -262,7 +276,7 @@ const EmployeeProfile = () => {
     };
 
     let chartData = [];
-    if (startLimit && endLimit && (endLimit - startLimit) / (1000 * 60 * 60 * 24) <= 60) {
+    if (startLimit && endLimit && (endLimit - startLimit) / (1000 * 60 * 60 * 24) <= 366) {
       chartData = fillMissingDays(startLimit, endLimit);
     } else {
       chartData = Object.values(dateMap).sort((a, b) => a.date > b.date ? 1 : -1);
@@ -289,7 +303,7 @@ const EmployeeProfile = () => {
       avgActual,
       productivity
     };
-  }, [reports, graphFilter, graphStartDate, graphEndDate]);
+  }, [reports, graphStartDate, graphEndDate]);
 
   // Tasks Data
   const todayTasks = useMemo(() => {
@@ -315,12 +329,12 @@ const EmployeeProfile = () => {
 
   const filteredHistory = useMemo(() => {
     return allTasks.filter(t => {
-      if (filterDate && t.date !== filterDate) return false;
+      if (historyStartDate && t.date < historyStartDate) return false;
+      if (historyEndDate && t.date > historyEndDate) return false;
       if (filterProject && t.project_name !== filterProject) return false;
-      if (filterMonth && !t.date.startsWith(filterMonth)) return false;
       return true;
     });
-  }, [allTasks, filterDate, filterProject, filterMonth]);
+  }, [allTasks, historyStartDate, historyEndDate, filterProject]);
 
   const uniqueProjects = useMemo(() => [...new Set(allTasks.map(t => t.project_name).filter(Boolean))], [allTasks]);
 
@@ -519,33 +533,21 @@ const EmployeeProfile = () => {
                 <h3 className="font-medium text-slate-950 text-base">Planned vs Actual Hours Trend</h3>
               </div>
               <div className="flex flex-wrap gap-2 items-center">
-                <select
-                  className="h-9 px-3 text-sm border border-slate-300 rounded-md bg-white shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
-                  value={graphFilter}
-                  onChange={(e) => setGraphFilter(e.target.value)}
-                >
-                  <option value="7">Last 7 Days</option>
-                  <option value="15">Last 15 Days</option>
-                  <option value="30">Last 30 Days</option>
-                  <option value="custom">Custom Date Range</option>
-                </select>
-                {graphFilter === 'custom' && (
-                  <>
-                    <input
-                      type="date"
-                      className="h-9 px-3 text-sm border border-slate-300 rounded-md shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
-                      value={graphStartDate}
-                      onChange={(e) => setGraphStartDate(e.target.value)}
-                    />
-                    <span className="text-slate-400">to</span>
-                    <input
-                      type="date"
-                      className="h-9 px-3 text-sm border border-slate-300 rounded-md shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
-                      value={graphEndDate}
-                      onChange={(e) => setGraphEndDate(e.target.value)}
-                    />
-                  </>
-                )}
+                <input
+                  type="date"
+                  className="h-9 px-3 text-sm border border-slate-300 rounded-md shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  value={graphStartDate}
+                  onChange={(e) => setGraphStartDate(e.target.value)}
+                  placeholder="From date"
+                />
+                <span className="text-slate-400">to</span>
+                <input
+                  type="date"
+                  className="h-9 px-3 text-sm border border-slate-300 rounded-md shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  value={graphEndDate}
+                  onChange={(e) => setGraphEndDate(e.target.value)}
+                  placeholder="To date"
+                />
               </div>
             </div>
 
@@ -586,7 +588,7 @@ const EmployeeProfile = () => {
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" />
                     <XAxis
                       dataKey="date"
-                      tickFormatter={(val) => formatDate(val).substring(0, 5)}
+                      tickFormatter={formatShortDate}
                       tick={{ fontSize: 12, fill: '#64748b' }}
                       tickMargin={15}
                       axisLine={{ stroke: '#e2e8f0', strokeWidth: 2 }}
@@ -654,7 +656,6 @@ const EmployeeProfile = () => {
                         <th className="px-4 py-3 w-1/3 font-medium">Task</th>
                         <th className="px-4 py-3 text-center font-medium">Planned Duration</th>
                         <th className="px-4 py-3 text-center font-medium">Actual Duration</th>
-                        <th className="px-4 py-3 text-center font-medium">Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-300">
@@ -663,9 +664,8 @@ const EmployeeProfile = () => {
                           <td className="px-4 py-3 font-semibold text-slate-900">{t.project_name}</td>
                           <td className="px-4 py-3 text-slate-500">{t.milestone_name || '-'}</td>
                           <td className="px-4 py-3 text-slate-600 max-w-[200px] truncate" title={t.task_name}>{t.task_name}</td>
-                          <td className="px-4 py-3 text-center text-slate-500">{decimalHours(t.planned_hours)}h</td>
-                          <td className="px-4 py-3 text-center font-semibold text-blue-900 bg-blue-50/50">{decimalHours(t.actual_hours)}h</td>
-                          <td className="px-4 py-3 text-center"><StatusBadge status={t.status} /></td>
+                          <td className="px-4 py-3 text-center font-semibold text-blue-600 bg-blue-50/50">{decimalHours(t.planned_hours)}h</td>
+                          <td className="px-4 py-3 text-center font-semibold text-orange-600 bg-orange-50/50">{decimalHours(t.actual_hours)}h</td>
                         </tr>
                       ))}
                     </tbody>
@@ -733,13 +733,13 @@ const EmployeeProfile = () => {
                 <h3 className="font-medium text-slate-950 text-base">Timesheet History</h3>
               </div>
               <div className="flex flex-wrap gap-2">
-                <input type="month" value={filterMonth} onChange={e => setFilterMonth(e.target.value)} className="h-9 px-3 text-sm border border-slate-300 rounded-md shadow-sm outline-none focus:ring-2 focus:ring-blue-500" />
-                <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)} className="h-9 px-3 text-sm border border-slate-300 rounded-md shadow-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                <input type="date" value={historyStartDate} onChange={e => setHistoryStartDate(e.target.value)} className="h-9 px-3 text-sm border border-slate-300 rounded-md shadow-sm outline-none focus:ring-2 focus:ring-blue-500" placeholder="From date" />
+                <input type="date" value={historyEndDate} onChange={e => setHistoryEndDate(e.target.value)} className="h-9 px-3 text-sm border border-slate-300 rounded-md shadow-sm outline-none focus:ring-2 focus:ring-blue-500" placeholder="To date" />
                 <select value={filterProject} onChange={e => setFilterProject(e.target.value)} className="h-9 px-3 text-sm border border-slate-300 rounded-md bg-white shadow-sm outline-none focus:ring-2 focus:ring-blue-500">
                   <option value="">All Projects</option>
                   {uniqueProjects.map(p => <option key={p} value={p}>{p}</option>)}
                 </select>
-                <button onClick={() => { setFilterDate(''); setFilterMonth(''); setFilterProject(''); }} className="h-9 px-4 bg-slate-200 text-slate-700 text-sm font-semibold rounded-md hover:bg-slate-300 transition">Clear Filters</button>
+                <button onClick={() => { setHistoryStartDate(''); setHistoryEndDate(''); setFilterProject(''); }} className="h-9 px-4 bg-slate-200 text-slate-700 text-sm font-semibold rounded-md hover:bg-slate-300 transition">Clear Filters</button>
               </div>
             </div>
             <div className="overflow-x-auto max-h-[500px]">
