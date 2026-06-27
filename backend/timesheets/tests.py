@@ -107,12 +107,37 @@ class TimesheetApiTests(TestCase):
         self.assertEqual(planned_overlap.status_code, 400)
         self.assertIn('Time overlap detected. Please adjust task timings before saving.', str(planned_overlap.data))
 
-        over_limit = self.client.post(
-            '/api/timesheets/',
-            self.payload(actual_start='15:00', actual_end='18:00'),
-            format='json'
-        )
-        self.assertEqual(over_limit.status_code, 400)
+        # Dynamic daily target hours check
+        from django.conf import settings as django_settings
+        django_settings.DAILY_HOUR_LIMIT = Decimal('10.00')
+        try:
+            # Actual hours can exceed target hours
+            over_limit_actual = self.client.post(
+                '/api/timesheets/',
+                self.payload(
+                    planned_start='11:00', planned_end='12:00',  # 1h planned
+                    actual_start='15:00', actual_end='23:00'    # 8h actual (total 6h + 8h = 14h actual)
+                ),
+                format='json'
+            )
+            self.assertEqual(over_limit_actual.status_code, 201)
+
+            # Planned hours cannot exceed target hours (10h)
+            # First task had 2h planned. Second task had 1h planned (total 3h planned).
+            # Let's post another task with 8h planned (total 3h + 8h = 11h planned, exceeds 10h)
+            over_limit_planned = self.client.post(
+                '/api/timesheets/',
+                self.payload(
+                    planned_start='12:00', planned_end='20:00',  # 8h planned
+                    actual_start='23:00', actual_end='23:30'
+                ),
+                format='json'
+            )
+            self.assertEqual(over_limit_planned.status_code, 400)
+            self.assertIn('Daily total planned hours must not exceed 10.00 hours.', str(over_limit_planned.data))
+        finally:
+            if hasattr(django_settings, 'DAILY_HOUR_LIMIT'):
+                del django_settings.DAILY_HOUR_LIMIT
 
     def test_unauthorized_and_ownership(self):
         anon = APIClient()

@@ -7,8 +7,7 @@ import {
 import DashboardLayout from '../../layouts/DashboardLayout';
 import Navbar from '../../components/common/Navbar';
 import Loader from '../../components/common/Loader';
-import { getStats } from '../../services/authService';
-import { getAdminTimesheets, getAdminProjects, getAdminMilestones } from '../../services/timesheetService';
+import { useAdminDashboardData } from '../../hooks/useAdminDashboardData';
 import { useAuth } from '../../context/AuthContext';
 
 const Section = ({ title, children }) => (
@@ -66,45 +65,15 @@ const ActionButton = ({ path, icon: Icon, label, tone, navigate }) => (
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  
-  const [stats, setStats] = useState({ total_employees: 0, active_employees: 0, departments: 0 });
-  const [projects, setProjects] = useState([]);
-  const [milestones, setMilestones] = useState([]);
-  const [todayTimesheets, setTodayTimesheets] = useState([]);
-  const [weekTimesheets, setWeekTimesheets] = useState([]);
-  const [monthTimesheets, setMonthTimesheets] = useState([]);
-
-  useEffect(() => {
-    const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    
-    const weekStart = new Date(today);
-    weekStart.setDate(today.getDate() - today.getDay());
-    const weekStartStr = `${weekStart.getFullYear()}-${String(weekStart.getMonth() + 1).padStart(2, '0')}-${String(weekStart.getDate()).padStart(2, '0')}`;
-    
-    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-    const monthStartStr = `${monthStart.getFullYear()}-${String(monthStart.getMonth() + 1).padStart(2, '0')}-01`;
-
-    Promise.all([
-      getStats(),
-      getAdminProjects(),
-      getAdminMilestones(),
-      getAdminTimesheets({ date: todayStr, page_size: 1000 }),
-      getAdminTimesheets({ date: weekStartStr, dateTo: todayStr, page_size: 2000 }),
-      getAdminTimesheets({ date: monthStartStr, dateTo: todayStr, page_size: 5000 })
-    ])
-      .then(([sRes, pRes, mRes, tToday, tWeek, tMonth]) => {
-        setStats(sRes.data);
-        setProjects(pRes.data?.data ?? pRes.data ?? []);
-        setMilestones(mRes.data?.data ?? mRes.data ?? []);
-        setTodayTimesheets(tToday.data || []);
-        setWeekTimesheets(tWeek.data || []);
-        setMonthTimesheets(tMonth.data || []);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+  const {
+    loading,
+    stats,
+    projects,
+    milestones,
+    todayTimesheets,
+    weekTimesheets,
+    monthTimesheets
+  } = useAdminDashboardData();
 
   const metrics = useMemo(() => {
     const activeEmps = stats.active_employees || 0;

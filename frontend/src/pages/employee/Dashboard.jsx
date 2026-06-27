@@ -4,7 +4,7 @@ import { Table2, Calendar, FolderGit2, Flag, Target, Clock, Activity, BarChart, 
 import DashboardLayout from '../../layouts/DashboardLayout';
 import Navbar from '../../components/common/Navbar';
 import Loader from '../../components/common/Loader';
-import { getTimesheetHistory } from '../../services/timesheetService';
+import { useEmployeeDashboardData } from '../../hooks/useEmployeeDashboardData';
 import { StatusBadge } from '../../components/ui';
 
 const formatDate = (dateStr) => {
@@ -15,8 +15,7 @@ const formatDate = (dateStr) => {
 };
 
 const EmployeeDashboard = () => {
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { history, loading } = useEmployeeDashboardData();
 
   // Filters
   const [fromDate, setFromDate] = useState('');
@@ -24,15 +23,6 @@ const EmployeeDashboard = () => {
   const [projectFilter, setProjectFilter] = useState('');
   const [milestoneFilter, setMilestoneFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-
-  useEffect(() => {
-    getTimesheetHistory()
-      .then((res) => {
-        setHistory(res.data || []);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
 
   // Filtered History
   const filteredHistory = useMemo(() => {

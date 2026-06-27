@@ -375,8 +375,8 @@ const TimesheetPage = () => {
       return false;
     }
 
-    if (actualTotal > targetMinutes) {
-      if (!isAutoSave) toast.error(`Daily total actual hours must not exceed ${dailyTargetHours} hours.`);
+    if (plannedTotal > targetMinutes) {
+      if (!isAutoSave) toast.error(`Daily total planned hours must not exceed ${dailyTargetHours} hours.`);
       return false;
     }
 
@@ -437,6 +437,12 @@ const TimesheetPage = () => {
           duration: 3500,
           className: 'bg-green-500 text-white border-none shadow-lg',
         });
+        if (actualTotal > targetMinutes) {
+          toast.warning(`Overtime detected: Actual time (${formatTotal(actualTotal)}) exceeds target hours (${dailyTargetHours}h).`, {
+            position: 'top-right',
+            duration: 4000,
+          });
+        }
         await loadData(false);
       }
     } catch (err) {

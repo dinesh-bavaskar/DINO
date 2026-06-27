@@ -47,6 +47,20 @@ const EODPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  const [localSettings] = useState(() => {
+    try {
+      const saved = localStorage.getItem('system-timesheet-settings');
+      return saved ? JSON.parse(saved) : {
+        dailyTargetHours: 8,
+      };
+    } catch {
+      return { dailyTargetHours: 8 };
+    }
+  });
+
+  const dailyTargetHours = localSettings?.dailyTargetHours || 8;
+  const targetMinutes = dailyTargetHours * 60;
+
   const actualTotal = useMemo(() =>
     eodRows.reduce((acc, r) => acc + toMinutes(calculateDuration(r.actual_start, r.actual_end)), 0),
     [eodRows]);
@@ -112,6 +126,12 @@ const EODPage = () => {
         await setTimesheetSubmissionStatus(r.id, 'submitted');
       }
       toast.success('EOD report submitted successfully!');
+      if (actualTotal > targetMinutes) {
+        toast.warning(`Overtime detected: Actual time (${formatTotal(actualTotal)}) exceeds target hours (${dailyTargetHours}h).`, {
+          position: 'top-right',
+          duration: 4000,
+        });
+      }
       loadData(false);
     } catch (err) {
       toast.error(getErrorMessage(err.response?.data));

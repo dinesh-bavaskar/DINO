@@ -34,6 +34,12 @@ API.interceptors.response.use(
   (response) => response,
   async (error) => {
     const original = error.config;
+    
+    // Ignore 401 on login endpoints
+    if (original.url && original.url.includes('/auth/')) {
+      return Promise.reject(error);
+    }
+    
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
       const refresh = getStoredItem('refresh_token');

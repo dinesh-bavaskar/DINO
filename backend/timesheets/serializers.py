@@ -236,10 +236,14 @@ class TimesheetSerializer(serializers.ModelSerializer):
             if entries.filter(actual_start__lt=actual_end, actual_end__gt=actual_start).exists():
                 raise serializers.ValidationError('Time overlap detected. Please adjust task timings before saving.')
 
-        current_total = entries.aggregate(total=Sum('actual_hours'))['total'] or Decimal('0.00')
-        if current_total + actual_hours > DAILY_HOUR_LIMIT:
+        # Get target hours limit from settings or fallback to DAILY_HOUR_LIMIT constant
+        from django.conf import settings as django_settings
+        target_hours_limit = Decimal(str(getattr(django_settings, 'DAILY_HOUR_LIMIT', DAILY_HOUR_LIMIT)))
+
+        current_total_planned = entries.aggregate(total=Sum('planned_hours'))['total'] or Decimal('0.00')
+        if current_total_planned + planned_hours > target_hours_limit:
             raise serializers.ValidationError({
-                'actual_hours': 'Daily total actual hours must not exceed 8 hours.'
+                'planned_hours': f'Daily total planned hours must not exceed {target_hours_limit} hours.'
             })
 
         attrs['daily_report'] = daily_report
